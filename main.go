@@ -18,7 +18,7 @@ import (
 const namespace = "aurora"
 
 var (
-	addr       = flag.String("web.listen-address", ":9106", "Address to listen on for web interface and telemetry.")
+	addr       = flag.String("web.listen-address", ":9113", "Address to listen on for web interface and telemetry.")
 	auroraURL  = flag.String("exporter.aurora-url", "http://127.0.0.1:8081", "URL to an Aurora scheduler")
 	metricPath = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
 )
