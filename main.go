@@ -84,6 +84,11 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 	defer close(ch)
 
+	now := time.Now().UnixNano()
+	defer func() {
+		e.duration.Set(float64(time.Now().UnixNano()-now) / 1000000000)
+	}()
+
 	recordErr := func(err error) {
 		glog.Warning(err)
 		e.errors.Inc()
