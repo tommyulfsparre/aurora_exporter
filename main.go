@@ -38,14 +38,14 @@ var httpClient = http.Client{
 
 type exporter struct {
 	sync.Mutex
-	auroraURL string
-	errors    prometheus.Counter
-	duration  prometheus.Gauge
+	f        finder
+	errors   prometheus.Counter
+	duration prometheus.Gauge
 }
 
-func newAuroraExporter(url string) *exporter {
+func newAuroraExporter(f finder) *exporter {
 	return &exporter{
-		auroraURL: url,
+		f: f,
 		errors: prometheus.NewGauge(
 			prometheus.GaugeOpts{
 				Namespace: namespace,
@@ -89,27 +89,12 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 		e.errors.Inc()
 	}
 
-	// This will redirect us to the elected Aurora master
-	schedulerURL := fmt.Sprintf("%s/scheduler", e.auroraURL)
-	rr, err := http.NewRequest("GET", schedulerURL, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	rresp, err := httpClient.Transport.RoundTrip(rr)
+	url, err := e.f.leaderURL()
 	if err != nil {
 		recordErr(err)
 		return
 	}
-	defer rresp.Body.Close()
 
-	masterLoc := rresp.Header.Get("Location")
-	if masterLoc == "" {
-		glog.V(6).Info("missing Location header in request")
-		masterLoc = schedulerURL
-	}
-
-	url := strings.TrimRight(masterLoc, "/scheduler")
 	varsURL := fmt.Sprintf("%s/vars.json", url)
 	resp, err := httpClient.Get(varsURL)
 	if err != nil {
@@ -159,7 +144,12 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 func main() {
 	flag.Parse()
 
-	exporter := newAuroraExporter(*auroraURL)
+	finder, err := newFinder(*auroraURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	exporter := newAuroraExporter(finder)
 	prometheus.MustRegister(exporter)
 
 	http.Handle(*metricPath, prometheus.Handler())

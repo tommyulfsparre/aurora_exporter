@@ -12,6 +12,9 @@ Name                           | Description
 -------------------------------|------------
 web.listen-address             | Address to listen on for web interface and telemetry.
 web.telemetry-path             | Path under which to expose metrics.
-exporter.aurora-url            | URL to a host running the Aurora scheduler
+exporter.aurora-url            | [URL](#aurora-url)
+
+#### Aurora URL
+Can be either a single ``http://host:port`` URL or a comma-separated ``zk://host1:port,zk://host2:port`` URL.
 
 ---
