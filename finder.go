@@ -80,8 +80,9 @@ func hostsFromURL(urls string) (hosts []string, err error) {
 }
 
 type zkFinder struct {
+	conn *zk.Conn
+
 	sync.RWMutex
-	conn     *zk.Conn
 	leaderIP string
 }
 
