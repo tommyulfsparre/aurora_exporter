@@ -26,9 +26,13 @@ type finder interface {
 func newFinder(url string) (f finder, err error) {
 	if strings.HasPrefix(url, "http://") {
 		f = &httpFinder{url: url}
-	} else if strings.HasPrefix(url, "zk://") {
+	}
+
+	if strings.HasPrefix(url, "zk://") {
 		f = newZkFinder(url)
-	} else {
+	}
+
+	if f == nil {
 		err = errors.New("finder: bad address")
 	}
 
@@ -106,10 +110,11 @@ func newZkFinder(url string) *zkFinder {
 
 func (f *zkFinder) leaderzNode() (string, error) {
 	children, stat, err := f.conn.Children(zkPath)
+	if stat == nil {
+		err = errors.New("zkFinder: children returned nil stat")
+	}
 	if err != nil {
 		return "", err
-	} else if stat == nil {
-		return "", errors.New("zkFinder: children returned nil stat")
 	}
 
 	var leaderSeq int
@@ -152,23 +157,22 @@ func (f *zkFinder) leaderURL() (string, error) {
 }
 
 func (f *zkFinder) watch() {
-Retry:
-	for {
+	for _ = range time.NewTicker(1 * time.Second).C {
 		zNode, err := f.leaderzNode()
 		if err != nil {
 			glog.Warning(err)
-			break
+			continue
 		}
 
 		glog.V(6).Info("leader zNode at: ", zNode)
 
 		data, stat, events, err := f.conn.GetW(zNode)
+		if stat == nil {
+			err = errors.New("get returned nil stat")
+		}
 		if err != nil {
 			glog.Warning(err)
-			break
-		} else if stat == nil {
-			glog.Warning("get returned nil stat")
-			break
+			continue
 		}
 
 		f.Lock()
@@ -176,16 +180,17 @@ Retry:
 		f.Unlock()
 
 		for ev := range events {
-			if ev.Err != nil {
-				glog.Warning("watcher error %v", ev.Err)
-			} else if ev.Type == zk.EventNodeDeleted {
-				glog.Info("leader zNode deleted")
-			} else {
-				continue
+			switch {
+			case ev.Err != nil:
+				err = fmt.Errorf("watcher error %+v", ev.Err)
+			case ev.Type == zk.EventNodeDeleted:
+				err = errors.New("leader zNode deleted")
 			}
-			break
+
+			if err != nil {
+				glog.Warning(err)
+				break
+			}
 		}
 	}
-	time.Sleep(1 * time.Second)
-	goto Retry
 }
