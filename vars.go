@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var counterMap = map[string]*prometheus.Desc{
+var counters = map[string]*prometheus.Desc{
 	"cron_job_launch_failures": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "cron_job_launch_failures"),
 		"Scheduled job failures total.",
@@ -29,7 +31,7 @@ var counterMap = map[string]*prometheus.Desc{
 	),
 	"http_500_responses_events": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "http_500_responses_events"),
-		"Number of HTTP 500 status responses sent by the scheduler total",
+		"Number of HTTP 500 status responses sent by the scheduler total.",
 		nil, nil,
 	),
 	"job_update_delete_errors": prometheus.NewDesc(
@@ -109,17 +111,17 @@ var counterMap = map[string]*prometheus.Desc{
 	),
 	"schedule_attempts_failed": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "schedule_attempts_failed"),
-		"Number of failed attempts to schedule tasks",
+		"Number of failed attempts to schedule tasks.",
 		nil, nil,
 	),
 	"schedule_attempts_fired": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "schedule_attempts_fired"),
-		"Number of attempts to schedule tasks",
+		"Number of attempts to schedule tasks.",
 		nil, nil,
 	),
 	"schedule_attempts_no_match": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "schedule_attempts_no_match"),
-		"Number of task which could not be scheduled",
+		"Number of task which could not be scheduled.",
 		nil, nil,
 	),
 	"schedule_queue_size": prometheus.NewDesc(
@@ -184,7 +186,7 @@ var counterMap = map[string]*prometheus.Desc{
 	),
 }
 
-var gaugeMap = map[string]*prometheus.Desc{
+var gauges = map[string]*prometheus.Desc{
 	"jvm_gc_PS_MarkSweep_collection_time_ms": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "jvm_gc_ps_marksweep_collection_time_ms"),
 		"Parallel mark and sweep collection time.",
@@ -207,7 +209,7 @@ var gaugeMap = map[string]*prometheus.Desc{
 	),
 	"jvm_memory_heap_mb_committed": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "jvm_memory_heap_mb_committed"),
-		"Commited heap memory",
+		"Commited heap memory.",
 		nil, nil,
 	),
 	"jvm_memory_heap_mb_used": prometheus.NewDesc(
@@ -267,7 +269,7 @@ var gaugeMap = map[string]*prometheus.Desc{
 	),
 	"sla_cluster_mtta_ms": prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", "sla_cluster_mtta_ms"),
-		"Median time to assigned",
+		"Median time to assigned.",
 		nil, nil,
 	),
 	"sla_cluster_mttr_ms": prometheus.NewDesc(
@@ -277,87 +279,157 @@ var gaugeMap = map[string]*prometheus.Desc{
 	),
 }
 
-var taskStateLabel = []string{"state"}
-var taskStateMap = map[string]*prometheus.Desc{
-	"task_store_THROTTLED": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task throttled for restarting too frequently total.",
-		taskStateLabel, nil,
-	),
-	"task_store_PENDING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task awaiting assignment to a slave total.",
-		taskStateLabel, nil,
-	),
-	"task_store_ASSIGNED": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task that has been assigned to a slave total.",
-		taskStateLabel, nil,
-	),
-	"task_store_STARTING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task bootstrapping total",
-		taskStateLabel, nil,
-	),
-	"task_store_RUNNING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task running on a slave total.",
-		taskStateLabel, nil,
-	),
-	"task_store_FINISHED": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task terminated with an exit code of zero total.",
-		taskStateLabel, nil,
-	),
-	"task_store_PREEMPTING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task preempted by another task total.",
-		taskStateLabel, nil,
-	),
-	"task_store_RESTARTING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task restarted in response to a user request total.",
-		taskStateLabel, nil,
-	),
-	"task_store_DRAINING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task restarted in response to a host maintenance request total.",
-		taskStateLabel, nil,
-	),
-	"task_store_FAILED": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task terminated with a non-zero exit code total.",
-		taskStateLabel, nil,
-	),
-	"task_store_KILLED": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task terminated by the system total.",
-		taskStateLabel, nil,
-	),
-	"task_store_KILLING": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task being forcibly killed total.",
-		taskStateLabel, nil,
-	),
-	"task_store_LOST": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_store"),
-		"Task that are in the LOST state, and have been rescheduled total.",
-		taskStateLabel, nil,
-	),
+var (
+	slaLabels = []string{"role", "env", "job"}
+	slaRe     = map[*regexp.Regexp]string{
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms"):                 "Median time to assigned.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms"):                 "Median time to running.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_nonprod_ms"):         "Median time to assigned nonprod.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_nonprod_ms"):         "Median time to running nonprod.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent"): "Aggregate platform uptime.",
+	}
+)
+
+func slaMetric(name string, value float64) (metric prometheus.Metric) {
+	for r, desc := range slaRe {
+		match := r.FindStringSubmatch(name)
+		if len(match) == 4 {
+			role, env, job := match[1], match[2], match[3]
+
+			jobKey := fmt.Sprintf("_%s/%s/%s", role, env, job)
+			metricName := strings.Replace(name, jobKey, "", 1)
+
+			metric = prometheus.MustNewConstMetric(
+				prometheus.NewDesc(
+					prometheus.BuildFQName(namespace, "", metricName),
+					desc, slaLabels, nil,
+				),
+				prometheus.GaugeValue,
+				value, role, env, job,
+			)
+			break
+		}
+	}
+	return metric
 }
 
-func variableVars(ch chan<- prometheus.Metric, name string, value interface{}) {
-	if strings.HasPrefix(name, "tasks_lost_rack_") {
-		rack := strings.Split(name, "tasks_lost_rack_")[1]
-		variableLabel := []string{"rack"}
-		ch <- prometheus.MustNewConstMetric(
+var (
+	stateLabel  = []string{"state"}
+	taskStoreRe = regexp.MustCompile("task_store_(?P<state>[A-Z]+)")
+)
+
+func taskStoreMetric(name string, value float64) (metric prometheus.Metric) {
+	match := taskStoreRe.FindStringSubmatch(name)
+	if len(match) == 2 {
+		state := match[1]
+
+		metric = prometheus.MustNewConstMetric(
 			prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, "", "tasks_lost"),
-				"Task lost per rack total",
-				variableLabel, nil,
+				prometheus.BuildFQName(namespace, "", "task_store"),
+				"Task store state.",
+				stateLabel, nil,
 			),
 			prometheus.CounterValue,
-			value.(float64), rack,
+			value, state,
 		)
+	}
+
+	return metric
+}
+
+var (
+	tasksLabels = []string{"state", "role", "env", "job"}
+	tasksRe     = regexp.MustCompile("tasks_(?P<state>.*)_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)")
+)
+
+func tasksMetric(name string, value float64) (metric prometheus.Metric) {
+	match := tasksRe.FindStringSubmatch(name)
+	if len(match) == 5 {
+		state, role, env, job := match[1], match[2], match[3], match[4]
+
+		metric = prometheus.MustNewConstMetric(
+			prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, "", "tasks"),
+				"Task state per job.",
+				tasksLabels, nil,
+			),
+			prometheus.CounterValue,
+			value, state, role, env, job,
+		)
+	}
+
+	return metric
+}
+
+var (
+	rackLabels  = []string{"rack"}
+	tasksRackRe = regexp.MustCompile("tasks_lost_rack_(?P<rack>.*)")
+)
+
+func tasksRackMetric(name string, value float64) (metric prometheus.Metric) {
+	match := tasksRackRe.FindStringSubmatch(name)
+	if len(match) == 2 {
+		rack := match[1]
+
+		metric = prometheus.MustNewConstMetric(
+			prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, "", "tasks_lost_rack"),
+				"Task lost per rack total.",
+				rackLabels, nil,
+			),
+			prometheus.CounterValue,
+			value, rack,
+		)
+	}
+
+	return metric
+}
+
+var updateRe = regexp.MustCompile("update_transition_(?P<state>[A-Z]+)")
+
+func updateMetric(name string, value float64) (metric prometheus.Metric) {
+	match := updateRe.FindStringSubmatch(name)
+	if len(match) == 2 {
+		state := match[1]
+
+		metric = prometheus.MustNewConstMetric(
+			prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, "", "update_transition"),
+				"Update transition.",
+				stateLabel, nil,
+			),
+			prometheus.CounterValue,
+			value, state,
+		)
+	}
+
+	return metric
+}
+
+func labelVars(ch chan<- prometheus.Metric, name string, value float64) {
+	var metric prometheus.Metric
+
+	if strings.HasPrefix(name, "task_store_") {
+		metric = taskStoreMetric(name, value)
+	}
+
+	if strings.HasPrefix(name, "tasks_") {
+		metric = tasksMetric(name, value)
+	}
+
+	if strings.HasPrefix(name, "tasks_lost_rack_") {
+		metric = tasksRackMetric(name, value)
+	}
+
+	if strings.HasPrefix(name, "sla_") {
+		metric = slaMetric(name, value)
+	}
+
+	if strings.HasPrefix(name, "update_transition_") {
+		metric = updateMetric(name, value)
+	}
+
+	if metric != nil {
+		ch <- metric
 	}
 }
