@@ -2,8 +2,9 @@
 
 This is an exporter for Prometheus to get instrumentation data for [Apache Aurora](http://aurora.apache.org/)
 
-## Run
+## Build and run
 
+    make
     ./aurora_exporter <flags>
 
 ### Flags
