@@ -333,7 +333,6 @@ func taskStoreMetric(name string, value float64) (metric prometheus.Metric) {
 			value, state,
 		)
 	}
-
 	return metric
 }
 
@@ -357,7 +356,6 @@ func tasksMetric(name string, value float64) (metric prometheus.Metric) {
 			value, state, role, env, job,
 		)
 	}
-
 	return metric
 }
 
@@ -381,7 +379,6 @@ func tasksRackMetric(name string, value float64) (metric prometheus.Metric) {
 			value, rack,
 		)
 	}
-
 	return metric
 }
 
@@ -402,7 +399,6 @@ func updateMetric(name string, value float64) (metric prometheus.Metric) {
 			value, state,
 		)
 	}
-
 	return metric
 }
 
