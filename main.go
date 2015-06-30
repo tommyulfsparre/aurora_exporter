@@ -116,33 +116,28 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 	}
 
 	for name, v := range vars {
+		v, ok := v.(float64)
+		if !ok {
+			continue
+		}
 
-		if desc, ok := counterMap[name]; ok {
+		if desc, ok := counters[name]; ok {
 			ch <- prometheus.MustNewConstMetric(
 				desc,
 				prometheus.CounterValue,
-				v.(float64), noLables...,
+				v, noLables...,
 			)
 		}
 
-		if desc, ok := gaugeMap[name]; ok {
+		if desc, ok := gauges[name]; ok {
 			ch <- prometheus.MustNewConstMetric(
 				desc,
 				prometheus.GaugeValue,
-				v.(float64), noLables...,
+				v, noLables...,
 			)
 		}
 
-		if desc, ok := taskStateMap[name]; ok {
-			label := strings.Split(name, "task_store_")[1]
-			ch <- prometheus.MustNewConstMetric(
-				desc,
-				prometheus.GaugeValue,
-				v.(float64), label,
-			)
-		}
-
-		variableVars(ch, name, v)
+		labelVars(ch, name, v)
 	}
 }
 
