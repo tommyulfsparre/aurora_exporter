@@ -406,27 +406,21 @@ func updateMetric(name string, value float64) (metric prometheus.Metric) {
 	return metric
 }
 
+var prefixFunc = map[string]func(string, float64) prometheus.Metric{
+	"tasks_":             tasksMetric,
+	"tasks_lost_rack_":   tasksRackMetric,
+	"task_store_":        taskStoreMetric,
+	"sla_":               slaMetric,
+	"update_transition_": updateMetric,
+}
+
 func labelVars(ch chan<- prometheus.Metric, name string, value float64) {
 	var metric prometheus.Metric
 
-	if strings.HasPrefix(name, "task_store_") {
-		metric = taskStoreMetric(name, value)
-	}
-
-	if strings.HasPrefix(name, "tasks_") {
-		metric = tasksMetric(name, value)
-	}
-
-	if strings.HasPrefix(name, "tasks_lost_rack_") {
-		metric = tasksRackMetric(name, value)
-	}
-
-	if strings.HasPrefix(name, "sla_") {
-		metric = slaMetric(name, value)
-	}
-
-	if strings.HasPrefix(name, "update_transition_") {
-		metric = updateMetric(name, value)
+	for prefix, f := range prefixFunc {
+		if strings.HasPrefix(name, prefix) {
+			metric = f(name, value)
+		}
 	}
 
 	if metric != nil {
