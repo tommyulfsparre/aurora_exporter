@@ -8,274 +8,601 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+func newMetric(subsys string, name string, descr string) *prometheus.Desc {
+	fqn := prometheus.BuildFQName(namespace, subsys, name)
+	return prometheus.NewDesc(fqn, descr, nil, nil)
+}
+
 var counters = map[string]*prometheus.Desc{
-	"cron_job_launch_failures": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "cron_job_launch_failures"),
+	"async_tasks_completed": newMetric(
+		"async_tasks",
+		"completed", "",
+	),
+	"cron_job_launch_failures": newMetric(
+		"cron",
+		"job_launch_failures",
 		"Scheduled job failures total.",
-		nil, nil,
 	),
-	"cron_jobs_loaded": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "cron_jobs_loaded"),
+	"cron_jobs_loaded": newMetric(
+		"",
+		"cron_jobs_loaded",
 		"Cron scheduler loaded.",
-		nil, nil,
 	),
-	"framework_registered": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "framework_registered"),
+	"dropped_update_events": newMetric(
+		"",
+		"dropped_update_events", "",
+	),
+	"framework_registered": newMetric(
+		"framework",
+		"registered",
 		"Framework registered total.",
-		nil, nil,
 	),
-	"gc_executor_tasks_lost": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "gc_executor_tasks_lost"),
+	"gc_executor_tasks_lost": newMetric(
+		"",
+		"gc_executor_tasks_lost",
 		"Lost garbage collection task total.",
-		nil, nil,
 	),
-	"http_500_responses_events": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "http_500_responses_events"),
+	"http_200_responses_events": newMetric(
+		"http_200",
+		"responses_events", "",
+	),
+	"http_200_responses_nanos_total": newMetric(
+		"http_200",
+		"responses_nanos_total", "",
+	),
+	"http_500_responses_events": newMetric(
+		"http_500",
+		"responses_events",
 		"Number of HTTP 500 status responses sent by the scheduler total.",
-		nil, nil,
 	),
-	"job_update_delete_errors": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "job_update_delete_errors"),
+	"job_update_delete_errors": newMetric(
+		"job_update",
+		"delete_errors",
 		"Failed delete job total.",
-		nil, nil,
 	),
-	"job_update_recovery_errors": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "job_update_recovery_errors"),
+	"job_update_recovery_errors": newMetric(
+		"job_update",
+		"recovery_errors",
 		"Failed resume job updates total.",
-		nil, nil,
 	),
-	"job_update_state_change_errors": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "job_update_state_change_errors"),
+	"job_update_state_change_errors": newMetric(
+		"",
+		"job_update_state_change_errors",
 		"State change errors total.",
-		nil, nil,
 	),
-	"jvm_gc_PS_MarkSweep_collection_count": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_gc_ps_marksweep_collection_count"),
+	"jvm_class_total_loaded_count": newMetric(
+		"jvm",
+		"class_total_loaded_count", "",
+	),
+	"jvm_gc_PS_MarkSweep_collection_count": newMetric(
+		"",
+		"jvm_gc_ps_marksweep_collection_count",
 		"Parallel mark and sweep collection run total.",
-		nil, nil,
 	),
-	"jvm_gc_PS_Scavenge_collection_count": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_gc_ps_scavenge_collection_count"),
+	"jvm_gc_PS_Scavenge_collection_count": newMetric(
+		"", "jvm_gc_ps_scavenge_collection_count",
 		"Parallel scavenge collector runs total.",
-		nil, nil,
 	),
-	"jvm_gc_collection_count": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_gc_collection_count"),
+	"jvm_gc_collection_count": newMetric(
+		"", "jvm_gc_collection_count",
 		"Garbage collection total.",
-		nil, nil,
 	),
-	"jvm_memory_heap_mb_max": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_heap_mb_max"),
+	"jvm_memory_heap_mb_max": newMetric(
+		"", "jvm_memory_heap_mb_max",
 		"Maximum heap memory.",
-		nil, nil,
 	),
-	"jvm_memory_max_mb": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_max_mb"),
+	"jvm_memory_max_mb": newMetric(
+		"", "jvm_memory_max_mb",
 		"Maximum amount of memory that the Java virtual machine will attempt to use.",
-		nil, nil,
 	),
-	"jvm_memory_mb_total": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_mb_total"),
+	"jvm_memory_mb_total": newMetric(
+		"", "jvm_memory_mb_total",
 		"Total amount of memory in the Java virtual machine.",
-		nil, nil,
 	),
-	"jvm_threads_peak": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_threads_peak"),
+	"jvm_threads_peak": newMetric(
+		"", "jvm_threads_peak",
 		"Peak thread count.",
-		nil, nil,
 	),
-	"jvm_threads_started": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_threads_started"),
+	"jvm_threads_started": newMetric(
+		"", "jvm_threads_started",
 		"Total threads started.",
-		nil, nil,
 	),
-	"jvm_uptime_secs": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_uptime_secs"),
+	"jvm_uptime_secs": newMetric(
+		"", "jvm_uptime_secs",
 		"Number of seconds the JVM process has been running.",
-		nil, nil,
 	),
-	"offer_accept_races": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "offer_accept_races"),
+	"log_storage_write_lock_wait_events": newMetric(
+		"log_storage",
+		"write_lock_wait_events", "",
+	),
+	"log_storage_write_lock_wait_ns_total": newMetric(
+		"log_storage",
+		"write_lock_wait_ns_total", "",
+	),
+	"offer_accept_races": newMetric(
+		"", "offer_accept_races",
 		"Accepted offer no longer exists in offer queue.",
-		nil, nil,
 	),
-	"process_max_fd_count": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "process_max_fd_count"),
-		"Max open file descriptors.",
-		nil, nil,
+	"preemptor_missing_attributes": newMetric(
+		"",
+		"preemptor_missing_attributes", "",
 	),
-	"process_open_fd_count": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "process_open_fd_count"),
+	"preemptor_slot_search_attempts_for_non_prod": newMetric(
+		"preemptor_slot_search",
+		"preemptor_slot_search_attempts_for_non_prod", "",
+	),
+	"preemptor_slot_search_attempts_for_prod": newMetric(
+		"preemptor_slot",
+		"search_attempts_for_prod", "",
+	),
+	"preemptor_slot_search_failed_for_non_prod": newMetric(
+		"preemptor_slot",
+		"search_failed_for_non_prod", "",
+	),
+	"preemptor_slot_search_failed_for_prod": newMetric(
+		"preemptor_slot",
+		"search_failed_for_prod", "",
+	),
+	"preemptor_slot_search_successful_for_non_prod": newMetric(
+		"preemptor_slot",
+		"search_successful_for_non_prod", "",
+	),
+	"preemptor_slot_search_successful_for_prod": newMetric(
+		"preemptor_slot",
+		"search_successful_for_prod", "",
+	),
+	"preemptor_slot_validation_failed": newMetric(
+		"preemptor_slot",
+		"validation_failed", "",
+	),
+	"preemptor_slot_validation_successful": newMetric(
+		"preemptor_slot",
+		"validation_successful", "",
+	),
+	"preemptor_task_processor_runs": newMetric(
+		"preemptor",
+		"task_processor_runs", "",
+	),
+	"preemptor_tasks_preempted_non_prod": newMetric(
+		"preemptor_tasks",
+		"preempted_non_prod", "",
+	),
+	"preemptor_tasks_preempted_prod": newMetric(
+		"preemptor_tasks",
+		"preempted_prod", "",
+	),
+	"process_max_fd_count": newMetric(
+		"process",
+		"max_fd_count", "Max open file descriptors.",
+	),
+	"process_open_fd_count": newMetric(
+		"", "process_open_fd_count",
 		"Open file descriptors in use.",
-		nil, nil,
 	),
-	"schedule_attempts_failed": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "schedule_attempts_failed"),
+	"pubsub_executor_queue_size": newMetric(
+		"",
+		"pubsub_executor_queue_size", "",
+	),
+	"schedule_attempts_failed": newMetric(
+		"", "schedule_attempts_failed",
 		"Number of failed attempts to schedule tasks.",
-		nil, nil,
 	),
-	"schedule_attempts_fired": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "schedule_attempts_fired"),
+	"schedule_attempts_fired": newMetric(
+		"", "schedule_attempts_fired",
 		"Number of attempts to schedule tasks.",
-		nil, nil,
 	),
-	"schedule_attempts_no_match": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "schedule_attempts_no_match"),
+	"schedule_attempts_no_match": newMetric(
+		"", "schedule_attempts_no_match",
 		"Number of task which could not be scheduled.",
-		nil, nil,
 	),
-	"schedule_queue_size": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "schedule_queue_size"),
+	"schedule_queue_size": newMetric(
+		"", "schedule_queue_size",
 		"Task scheduler queue size.",
-		nil, nil,
 	),
-	"scheduler_backup_failed": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_backup_failed"),
+	"scheduled_task_penalty_events": newMetric(
+		"scheduled_task",
+		"penalty_events", "",
+	),
+	"scheduled_task_penalty_ms_total": newMetric(
+		"scheduled_task",
+		"penalty_ms_total", "",
+	),
+	"scheduler_backup_failed": newMetric(
+		"", "scheduler_backup_failed",
 		"Number of failed storage backup.",
-		nil, nil,
 	),
-	"scheduler_backup_success": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_backup_success"),
+	"scheduler_backup_success": newMetric(
+		"", "scheduler_backup_success",
 		"Number successful storage backup.",
-		nil, nil,
 	),
-	"scheduler_gc_insufficient_offers": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_gc_insufficient_offers"),
+	"scheduler_driver_kill_failures": newMetric(
+		"",
+		"scheduler_driver_kill_failures", "",
+	),
+	"scheduler_gc_insufficient_offers": newMetric(
+		"", "scheduler_gc_insufficient_offers",
 		"Number off resource offer that was too small for a garbage collection task.",
-		nil, nil,
 	),
-	"scheduler_gc_offers_consumed": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_gc_offers_consumed"),
+	"scheduler_gc_offers_consumed": newMetric(
+		"", "scheduler_gc_offers_consumed",
 		"Number of resource offers consumed for garbage collection tasks.",
-		nil, nil,
 	),
-	"scheduler_gc_tasks_created": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_gc_tasks_created"),
+	"scheduler_gc_tasks_created": newMetric(
+		"", "scheduler_gc_tasks_created",
 		"Number of garbage collection tasks created.",
-		nil, nil,
 	),
-	"scheduler_log_native_append_nanos_total": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_log_native_append_nanos_total"),
-		"Timed append operations total.",
-		nil, nil,
+	"scheduler_log_bad_frames_read": newMetric(
+		"scheduler_log",
+		"bad_frames_read", "",
 	),
-	"scheduler_log_native_append_events": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_log_native_append_events"),
+	"scheduler_log_bytes_read": newMetric(
+		"scheduler_log",
+		"bytes_read", "",
+	),
+	"scheduler_log_deflated_entries_read": newMetric(
+		"scheduler_log",
+		"deflated_entries_read", "",
+	),
+	"scheduler_log_entries_read": newMetric(
+		"scheduler_log",
+		"entries_read", "",
+	),
+	"scheduler_log_entries_written": newMetric(
+		"scheduler_log",
+		"entries_written", "",
+	),
+	"scheduler_log_native_append_events": newMetric(
+		"", "scheduler_log_native_append_events",
 		"Number of append operations total.",
-		nil, nil,
 	),
-	"scheduler_resource_offers": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "scheduler_resource_offers"),
+	"scheduler_log_native_append_failures": newMetric(
+		"scheduler_log",
+		"native_append_failures", "Number of append failures total.",
+	),
+	"scheduler_log_native_append_nanos_total": newMetric(
+		"", "scheduler_log_native_append_nanos_total",
+		"Timed append operations total.",
+	),
+	"scheduler_log_native_append_nanos_total_per_sec": newMetric(
+		"scheduler_log",
+		"native_append_nanos_total_per_sec", "",
+	),
+	"scheduler_log_native_append_timeouts": newMetric(
+		"scheduler_log",
+		"native_append_timeouts", "",
+	),
+	"scheduler_log_native_native_entries_skipped": newMetric(
+		"scheduler_log",
+		"native_native_entries_skipped", "",
+	),
+	"scheduler_log_native_read_events": newMetric(
+		"scheduler_log",
+		"native_read_events", "",
+	),
+	"scheduler_log_native_read_failures": newMetric(
+		"scheduler_log",
+		"native_read_failures", "",
+	),
+	"scheduler_log_native_read_nanos_total": newMetric(
+		"scheduler_log",
+		"native_read_nanos_total", "",
+	),
+	"scheduler_log_native_read_timeouts": newMetric(
+		"scheduler_log",
+		"native_read_timeouts", "",
+	),
+	"scheduler_log_native_truncate_events": newMetric(
+		"scheduler_log",
+		"native_truncate_events", "",
+	),
+	"scheduler_log_native_truncate_failures": newMetric(
+		"scheduler_log",
+		"native_truncate_failures", "",
+	),
+	"scheduler_log_native_truncate_nanos_total": newMetric(
+		"scheduler_log",
+		"native_truncate_nanos_total", "",
+	),
+	"scheduler_log_native_truncate_timeouts": newMetric(
+		"scheduler_log",
+		"native_truncate_timeouts", "",
+	),
+	"scheduler_log_snapshots": newMetric(
+		"scheduler_log",
+		"snapshots", "",
+	),
+	"scheduler_log_un_snapshotted_transactions": newMetric(
+		"scheduler_log",
+		"un_snapshotted_transactions", "",
+	),
+	"scheduler_resource_offers": newMetric(
+		"", "scheduler_resource_offers",
 		"Number of resource offers that the scheduler has received.",
-		nil, nil,
 	),
-	"task_kill_retries": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "task_kill_retries"),
+	"scheduler_thrift_getJobSummary_events": newMetric(
+		"scheduler_thrift",
+		"getJobSummary_events", "",
+	),
+	"scheduler_thrift_getJobSummary_nanos_total": newMetric(
+		"scheduler_thrift",
+		"getJobSummary_nanos_total", "",
+	),
+	"scheduler_thrift_getQuota_events": newMetric(
+		"scheduler_thrift",
+		"getQuota_events", "",
+	),
+	"scheduler_thrift_getQuota_nanos_per_event": newMetric(
+		"scheduler_thrift",
+		"getQuota_nanos_per_event", "",
+	),
+	"scheduler_thrift_getQuota_nanos_total": newMetric(
+		"scheduler_thrift",
+		"getQuota_nanos_total", "",
+	),
+	"task_kill_retries": newMetric(
+		"", "task_kill_retries",
 		"Number of times the scheduler has retried to kill a Task.",
-		nil, nil,
 	),
-	"timed_out_tasks": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "timed_out_tasks"),
+	"task_queries_all": newMetric(
+		"task",
+		"queries_all", "",
+	),
+	"task_queries_by_host": newMetric(
+		"task",
+		"queries_by_host", "",
+	),
+	"task_queries_by_id": newMetric(
+		"task",
+		"queries_by_id", "",
+	),
+	"task_queries_by_job": newMetric(
+		"task",
+		"queries_by_job", "",
+	),
+	"task_throttle_events": newMetric(
+		"task",
+		"throttle_events", "",
+	),
+	"task_throttle_ms_total": newMetric(
+		"task",
+		"throttle_ms_total", "",
+	),
+	"timed_out_tasks": newMetric(
+		"", "timed_out_tasks",
 		"Number of times the scheduler has given up waiting to hear back about a task in a transient state.",
-		nil, nil,
 	),
-	"uncaught_exceptions": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "uncaught_exceptions"),
+	"uncaught_exceptions": newMetric(
+		"", "uncaught_exceptions",
 		"Uncaught java exceptions.",
-		nil, nil,
 	),
 }
 
 var gauges = map[string]*prometheus.Desc{
-	"jvm_gc_PS_MarkSweep_collection_time_ms": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_gc_ps_marksweep_collection_time_ms"),
+	"http_200_responses_events_per_sec": newMetric(
+		"http_200",
+		"responses_events_per_sec", "",
+	),
+	"http_200_responses_nanos_per_event": newMetric(
+		"http_200",
+		"responses_nanos_per_event", "",
+	),
+	"http_200_responses_nanos_total_per_sec": newMetric(
+		"http_200",
+		"responses_nanos_total_per_sec", "",
+	),
+	"jvm_class_loaded_count": newMetric(
+		"jvm",
+		"class_loaded_count", "",
+	),
+	"jvm_class_unloaded_count": newMetric(
+		"jvm",
+		"class_unloaded_count", "",
+	),
+	"jvm_gc_PS_MarkSweep_collection_time_ms": newMetric(
+		"",
+		"jvm_gc_ps_marksweep_collection_time_ms",
 		"Parallel mark and sweep collection time.",
-		nil, nil,
 	),
-	"jvm_gc_PS_Scavenge_collection_time_ms": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_gc_ps_scavenge_collection_time_ms"),
+	"jvm_gc_PS_Scavenge_collection_time_ms": newMetric(
+		"",
+		"jvm_gc_ps_scavenge_collection_time_ms",
 		"Parallel scavenge collector time.",
-		nil, nil,
 	),
-	"jvm_gc_collection_time_ms": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_gc_collection_time_ms"),
+	"jvm_gc_collection_time_ms": newMetric(
+		"",
+		"jvm_gc_collection_time_ms",
 		"Garbage collection time.",
-		nil, nil,
 	),
-	"jvm_memory_free_mb": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_free_mb"),
+	"jvm_memory_free_mb": newMetric(
+		"",
+		"jvm_memory_free_mb",
 		"Amount of free memory in the Java Virtual Machine.",
-		nil, nil,
 	),
-	"jvm_memory_heap_mb_committed": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_heap_mb_committed"),
+	"jvm_memory_heap_mb_committed": newMetric(
+		"",
+		"jvm_memory_heap_mb_committed",
 		"Commited heap memory.",
-		nil, nil,
 	),
-	"jvm_memory_heap_mb_used": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_heap_mb_used"),
+	"jvm_memory_heap_mb_used": newMetric(
+		"",
+		"jvm_memory_heap_mb_used",
 		"Current memory usage of the heap.",
-		nil, nil,
 	),
-	"jvm_memory_non_heap_mb_committed": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_non_heap_mb_committed"),
+	"jvm_memory_non_heap_mb_committed": newMetric(
+		"",
+		"jvm_memory_non_heap_mb_committed",
 		"Commited non heap memory used.",
-		nil, nil,
 	),
-	"jvm_memory_non_heap_mb_max": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_non_heap_mb_max"),
+	"jvm_memory_non_heap_mb_max": newMetric(
+		"",
+		"jvm_memory_non_heap_mb_max",
 		"Max non heap memory used in MB.",
-		nil, nil,
 	),
-	"jvm_memory_non_heap_mb_used": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_memory_non_heap_mb_used"),
+	"jvm_memory_non_heap_mb_used": newMetric(
+		"",
+		"jvm_memory_non_heap_mb_used",
 		"Non heap memory used in MB.",
-		nil, nil,
 	),
-	"jvm_threads_active": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_threads_active"),
+	"jvm_threads_active": newMetric(
+		"",
+		"jvm_threads_active",
 		"Current number of live threads both daemon and non-daemon threads.",
-		nil, nil,
 	),
-	"jvm_threads_daemon": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "jvm_threads_daemon"),
+	"jvm_threads_daemon": newMetric(
+		"",
+		"jvm_threads_daemon",
 		"Current number of live daemon threads.",
-		nil, nil,
 	),
-	"outstanding_offers": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "outstanding_offers"),
+	"log_storage_write_lock_wait_events_per_sec": newMetric(
+		"log_storage",
+		"write_lock_wait_events_per_sec", "",
+	),
+	"log_storage_write_lock_wait_ns_per_event": newMetric(
+		"log_storage",
+		"write_lock_wait_ns_per_event", "",
+	),
+	"log_storage_write_lock_wait_ns_total_per_sec": newMetric(
+		"log_storage",
+		"write_lock_wait_ns_total_per_sec", "",
+	),
+	"outstanding_offers": newMetric(
+		"",
+		"outstanding_offers",
 		"Outstanding offers waiting to be returned.",
-		nil, nil,
 	),
-	"process_cpu_cores_utilized": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "process_cpu_cores_utilized"),
+	"process_cpu_cores_utilized": newMetric(
+		"",
+		"process_cpu_cores_utilized",
 		"CPU time used by the process.",
-		nil, nil,
 	),
-	"system_free_physical_memory_mb": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "system_free_physical_memory_mb"),
-		"Free physical memory in MB.",
-		nil, nil,
+	"scheduled_task_penalty_events_per_sec": newMetric(
+		"scheduled_task",
+		"penalty_events_per_sec", "",
 	),
-	"system_load_avg": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "system_load_avg"),
-		"1 minute load average.",
-		nil, nil,
+	"scheduled_task_penalty_ms_per_event": newMetric(
+		"scheduled_task",
+		"penalty_ms_per_event", "",
 	),
-	"sla_cluster_platform_uptime_percent": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "sla_cluster_platform_uptime_percent"),
-		"Aggregate amount of time a job spends in a non-runnable state.",
-		nil, nil,
+	"scheduled_task_penalty_ms_total_per_sec": newMetric(
+		"scheduled_task",
+		"penalty_ms_total_per_sec", "",
 	),
-	"sla_cluster_mtta_ms": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "sla_cluster_mtta_ms"),
+	"scheduler_lifecycle_ACTIVE": newMetric(
+		"scheduler_lifecycle",
+		"ACTIVE", "",
+	),
+	"scheduler_lifecycle_DEAD": newMetric(
+		"scheduler_lifecycle",
+		"DEAD", "",
+	),
+	"scheduler_lifecycle_IDLE": newMetric(
+		"scheduler_lifecycle",
+		"IDLE", "",
+	),
+	"scheduler_lifecycle_LEADER_AWAITING_REGISTRATION": newMetric(
+		"scheduler_lifecycle",
+		"LEADER_AWAITING_REGISTRATION", "",
+	),
+	"scheduler_lifecycle_PREPARING_STORAGE": newMetric(
+		"scheduler_lifecycle",
+		"PREPARING_STORAGE", "",
+	),
+	"scheduler_lifecycle_STORAGE_PREPARED": newMetric(
+		"scheduler_lifecycle",
+		"STORAGE_PREPARED", "",
+	),
+	"scheduler_log_bytes_written": newMetric(
+		"scheduler_log",
+		"bytes_written", "",
+	),
+	"scheduler_log_native_append_events_per_sec": newMetric(
+		"scheduler_log",
+		"native_append_events_per_sec", "",
+	),
+	"scheduler_log_native_append_nanos_per_event": newMetric(
+		"scheduler_log",
+		"native_append_nanos_per_event", "",
+	),
+	"scheduler_log_native_read_events_per_sec": newMetric(
+		"scheduler_log",
+		"native_read_events_per_sec", "",
+	),
+	"scheduler_log_native_read_nanos_per_event": newMetric(
+		"scheduler_log",
+		"native_read_nanos_per_event", "",
+	),
+	"scheduler_log_native_read_nanos_total_per_sec": newMetric(
+		"scheduler_log",
+		"native_read_nanos_total_per_sec", "",
+	),
+	"scheduler_log_native_truncate_events_per_sec": newMetric(
+		"scheduler_log",
+		"native_truncate_events_per_sec", "",
+	),
+	"scheduler_log_native_truncate_nanos_per_event": newMetric(
+		"scheduler_log",
+		"native_truncate_nanos_per_event", "",
+	),
+	"scheduler_log_native_truncate_nanos_total_per_sec": newMetric(
+		"scheduler_log",
+		"native_truncate_nanos_total_per_sec", "",
+	),
+	"scheduler_thrift_getJobSummary_events_per_sec": newMetric(
+		"scheduler_thrift",
+		"getJobSummary_events_per_sec", "",
+	),
+	"scheduler_thrift_getJobSummary_nanos_per_event": newMetric(
+		"scheduler_thrift",
+		"getJobSummary_nanos_per_event", "",
+	),
+	"scheduler_thrift_getJobSummary_nanos_total_per_sec": newMetric(
+		"scheduler_thrift",
+		"getJobSummary_nanos_total_per_sec", "",
+	),
+	"scheduler_thrift_getQuota_events_per_sec": newMetric(
+		"scheduler_thrift",
+		"getQuota_events_per_sec", "",
+	),
+	"scheduler_thrift_getQuota_nanos_total_per_sec": newMetric(
+		"scheduler_thrift",
+		"getQuota_nanos_total_per_sec", "",
+	),
+	"sla_cluster_mtta_ms": newMetric(
+		"",
+		"sla_cluster_mtta_ms",
 		"Median time to assigned.",
-		nil, nil,
 	),
-	"sla_cluster_mttr_ms": prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", "sla_cluster_mttr_ms"),
+	"sla_cluster_mttr_ms": newMetric(
+		"",
+		"sla_cluster_mttr_ms",
 		"Median time to running.",
-		nil, nil,
+	),
+	"sla_cluster_platform_uptime_percent": newMetric(
+		"",
+		"sla_cluster_platform_uptime_percent",
+		"Aggregate amount of time a job spends in a non-runnable state.",
+	),
+	"system_free_physical_memory_mb": newMetric(
+		"",
+		"system_free_physical_memory_mb",
+		"Free physical memory in MB.",
+	),
+	"system_load_avg": newMetric(
+		"",
+		"system_load_avg",
+		"1 minute load average.",
+	),
+	"task_throttle_events_per_sec": newMetric(
+		"task",
+		"throttle_events_per_sec", "",
+	),
+	"task_throttle_ms_total_per_sec": newMetric(
+		"task",
+		"throttle_ms_total_per_sec", "",
+	),
+	"timeout_queue_size": newMetric(
+		"",
+		"timeout_queue_size", "",
 	),
 }
 
