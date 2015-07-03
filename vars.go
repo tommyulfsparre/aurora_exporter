@@ -402,24 +402,6 @@ var gauges = map[string]*prometheus.Desc{
 	"scheduled_task_penalty_ms_total_per_sec": newMetric(
 		"scheduled_task", "penalty_ms_total_per_sec", "",
 	),
-	"scheduler_lifecycle_ACTIVE": newMetric(
-		"scheduler_lifecycle", "ACTIVE", "",
-	),
-	"scheduler_lifecycle_DEAD": newMetric(
-		"scheduler_lifecycle", "DEAD", "",
-	),
-	"scheduler_lifecycle_IDLE": newMetric(
-		"scheduler_lifecycle", "IDLE", "",
-	),
-	"scheduler_lifecycle_LEADER_AWAITING_REGISTRATION": newMetric(
-		"scheduler_lifecycle", "LEADER_AWAITING_REGISTRATION", "",
-	),
-	"scheduler_lifecycle_PREPARING_STORAGE": newMetric(
-		"scheduler_lifecycle", "PREPARING_STORAGE", "",
-	),
-	"scheduler_lifecycle_STORAGE_PREPARED": newMetric(
-		"scheduler_lifecycle", "STORAGE_PREPARED", "",
-	),
 	"scheduler_log_bytes_written": newMetric(
 		"scheduler_log", "bytes_written", "",
 	),
@@ -616,12 +598,33 @@ func updateMetric(name string, value float64) (metric prometheus.Metric) {
 	return metric
 }
 
+var schedulerLifecycleRe = regexp.MustCompile("scheduler_lifecycle_(?P<state>[A-Z]+)")
+
+func schedulerLifecycleMetric(name string, value float64) (metric prometheus.Metric) {
+	match := schedulerLifecycleRe.FindStringSubmatch(name)
+	if len(match) == 2 {
+		state := match[1]
+
+		metric = prometheus.MustNewConstMetric(
+			prometheus.NewDesc(
+				prometheus.BuildFQName(namespace, "", "scheduler_lifecycle"),
+				"Scheduler lifecycle.",
+				stateLabel, nil,
+			),
+			prometheus.GaugeValue,
+			value, state,
+		)
+	}
+	return metric
+}
+
 var prefixFunc = map[string]func(string, float64) prometheus.Metric{
-	"tasks_":             tasksMetric,
-	"tasks_lost_rack_":   tasksRackMetric,
-	"task_store_":        taskStoreMetric,
-	"sla_":               slaMetric,
-	"update_transition_": updateMetric,
+	"tasks_":               tasksMetric,
+	"tasks_lost_rack_":     tasksRackMetric,
+	"task_store_":          taskStoreMetric,
+	"sla_":                 slaMetric,
+	"update_transition_":   updateMetric,
+	"scheduler_lifecycle_": schedulerLifecycleMetric,
 }
 
 func labelVars(ch chan<- prometheus.Metric, name string, value float64) {
