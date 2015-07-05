@@ -329,7 +329,7 @@ func taskStoreMetric(name string, value float64) (metric prometheus.Metric) {
 				"Task store state.",
 				stateLabel, nil,
 			),
-			prometheus.CounterValue,
+			prometheus.GaugeValue,
 			value, state,
 		)
 	}
