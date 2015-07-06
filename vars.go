@@ -59,8 +59,14 @@ var counters = map[string]*prometheus.Desc{
 		"job_update", "state_change_errors",
 		"State change errors total.",
 	),
+	"jvm_class_loaded_count": newDesc(
+		"jvm", "class_loaded_count", "",
+	),
 	"jvm_class_total_loaded_count": newDesc(
 		"jvm", "class_total_loaded_count", "",
+	),
+	"jvm_class_unloaded_count": newDesc(
+		"jvm", "class_unloaded_count", "",
 	),
 	"jvm_gc_PS_MarkSweep_collection_count": newDesc(
 		"jvm", "gc_ps_marksweep_collection_count",
@@ -85,6 +91,10 @@ var counters = map[string]*prometheus.Desc{
 	"jvm_memory_mb_total": newDesc(
 		"jvm", "memory_mb_total",
 		"Total amount of memory in the Java virtual machine.",
+	),
+	"jvm_memory_non_heap_mb_max": newDesc(
+		"jvm", "memory_non_heap_mb_max",
+		"Max non heap memory used in MB.",
 	),
 	"jvm_threads_peak": newDesc(
 		"jvm", "threads_peak",
@@ -152,9 +162,6 @@ var counters = map[string]*prometheus.Desc{
 		"process", "open_fd_count",
 		"Open file descriptors in use.",
 	),
-	"pubsub_executor_queue_size": newDesc(
-		"", "pubsub_executor_queue_size", "",
-	),
 	"schedule_attempts_failed": newDesc(
 		"schedule", "attempts_failed",
 		"Number of failed attempts to schedule tasks.",
@@ -166,10 +173,6 @@ var counters = map[string]*prometheus.Desc{
 	"schedule_attempts_no_match": newDesc(
 		"schedule", "attempts_no_match",
 		"Number of task which could not be scheduled.",
-	),
-	"schedule_queue_size": newDesc(
-		"schedule", "queue_size",
-		"Task scheduler queue size.",
 	),
 	"scheduled_task_penalty_events": newDesc(
 		"scheduled_task", "penalty_events", "",
@@ -326,12 +329,6 @@ var gauges = map[string]*prometheus.Desc{
 	"http_200_responses_nanos_total_per_sec": newDesc(
 		"http_200", "responses_nanos_total_per_sec", "",
 	),
-	"jvm_class_loaded_count": newDesc(
-		"jvm", "class_loaded_count", "",
-	),
-	"jvm_class_unloaded_count": newDesc(
-		"jvm", "class_unloaded_count", "",
-	),
 	"jvm_gc_PS_MarkSweep_collection_time_ms": newDesc(
 		"jvm", "gc_ps_marksweep_collection_time_ms",
 		"Parallel mark and sweep collection time.",
@@ -359,10 +356,6 @@ var gauges = map[string]*prometheus.Desc{
 	"jvm_memory_non_heap_mb_committed": newDesc(
 		"jvm", "memory_non_heap_mb_committed",
 		"Commited non heap memory used.",
-	),
-	"jvm_memory_non_heap_mb_max": newDesc(
-		"jvm", "memory_non_heap_mb_max",
-		"Max non heap memory used in MB.",
 	),
 	"jvm_memory_non_heap_mb_used": newDesc(
 		"jvm", "memory_non_heap_mb_used",
@@ -392,6 +385,13 @@ var gauges = map[string]*prometheus.Desc{
 	"process_cpu_cores_utilized": newDesc(
 		"", "process_cpu_cores_utilized",
 		"CPU time used by the process.",
+	),
+	"pubsub_executor_queue_size": newDesc(
+		"", "pubsub_executor_queue_size", "",
+	),
+	"schedule_queue_size": newDesc(
+		"schedule", "queue_size",
+		"Task scheduler queue size.",
 	),
 	"scheduled_task_penalty_events_per_sec": newDesc(
 		"scheduled_task", "penalty_events_per_sec", "",
