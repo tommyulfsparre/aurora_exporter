@@ -119,40 +119,40 @@ var counters = map[string]*prometheus.Desc{
 		"Accepted offer no longer exists in offer queue.",
 	),
 	"preemptor_missing_attributes": newDesc(
-		"", "preemptor_missing_attributes", "",
+		"preemptor", "missing_attributes", "",
 	),
 	"preemptor_slot_search_attempts_for_non_prod": newDesc(
-		"preemptor_slot", "search_attempts_for_non_prod", "",
+		"preemptor", "slot_search_attempts_for_non_prod", "",
 	),
 	"preemptor_slot_search_attempts_for_prod": newDesc(
-		"preemptor_slot", "search_attempts_for_prod", "",
+		"preemptor", "slot_search_attempts_for_prod", "",
 	),
 	"preemptor_slot_search_failed_for_non_prod": newDesc(
-		"preemptor_slot", "search_failed_for_non_prod", "",
+		"preemptor", "slot_search_failed_for_non_prod", "",
 	),
 	"preemptor_slot_search_failed_for_prod": newDesc(
-		"preemptor_slot", "search_failed_for_prod", "",
+		"preemptor", "slot_search_failed_for_prod", "",
 	),
 	"preemptor_slot_search_successful_for_non_prod": newDesc(
-		"preemptor_slot", "search_successful_for_non_prod", "",
+		"preemptor", "slot_search_successful_for_non_prod", "",
 	),
 	"preemptor_slot_search_successful_for_prod": newDesc(
-		"preemptor_slot", "search_successful_for_prod", "",
+		"preemptor", "slot_search_successful_for_prod", "",
 	),
 	"preemptor_slot_validation_failed": newDesc(
-		"preemptor_slot", "validation_failed", "",
+		"preemptor", "slot_validation_failed", "",
 	),
 	"preemptor_slot_validation_successful": newDesc(
-		"preemptor_slot", "validation_successful", "",
+		"preemptor", "slot_validation_successful", "",
 	),
 	"preemptor_task_processor_runs": newDesc(
 		"preemptor", "task_processor_runs", "",
 	),
 	"preemptor_tasks_preempted_non_prod": newDesc(
-		"preemptor_tasks", "preempted_non_prod", "",
+		"preemptor", "tasks_preempted_non_prod", "",
 	),
 	"preemptor_tasks_preempted_prod": newDesc(
-		"preemptor_tasks", "preempted_prod", "",
+		"preemptor", "tasks_preempted_prod", "",
 	),
 	"process_max_fd_count": newDesc(
 		"process", "max_fd_count",
