@@ -456,6 +456,18 @@ var gauges = map[string]*prometheus.Desc{
 		"sla", "cluster_platform_uptime_percent",
 		"Aggregate amount of time a job spends in a non-runnable state.",
 	),
+	"sla_cluster_mtta_ms_nonprod": newDesc(
+		"sla", "cluster_mtta_ms_nonprod",
+		"Median time to assigned nonprod.",
+	),
+	"sla_cluster_mttr_ms_nonprod": newDesc(
+		"sla", "cluster_mttr_ms_nonprod",
+		"Median time to running nonprod.",
+	),
+	"sla_cluster_platform_uptime_percent_nonprod": newDesc(
+		"sla", "cluster_platform_uptime_percent_nonprod",
+		"Aggregate amount of time a job spends in a non-runnable state nonprod.",
+	),
 	"system_free_physical_memory_mb": newDesc(
 		"system", "free_physical_memory_mb",
 		"Free physical memory in MB.",
@@ -478,11 +490,12 @@ var gauges = map[string]*prometheus.Desc{
 var (
 	slaLabels = []string{"role", "env", "job"}
 	slaRe     = map[*regexp.Regexp]string{
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms"):                 "Median time to assigned.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms"):                 "Median time to running.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_nonprod_ms"):         "Median time to assigned nonprod.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_nonprod_ms"):         "Median time to running nonprod.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent"): "Aggregate platform uptime.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms$"):                         "Median time to assigned.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms$"):                         "Median time to running.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms_nonprod$"):                 "Median time to assigned nonprod.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms_nonprod$"):                 "Median time to running nonprod.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent$"):         "Aggregate platform uptime.",
+		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent_nonprod$"): "Aggregate platform uptime nonprod.",
 	}
 )
 
