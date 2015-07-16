@@ -1,0 +1,38 @@
+{{ template "head" . }}
+
+{{ template "prom_right_table_head" }}
+{{ template "prom_right_table_tail" }}
+
+{{ template "prom_content_head" . }}
+<h1>Apache Aurora</h1>
+  <h3>Tasks</h3>
+  <div id="taskStoreGraph"></div>
+  <script>
+  new PromConsole.Graph({
+    node: document.querySelector("#taskStoreGraph"),
+    expr: "aurora_task_store{state=~'RUNNING|THROTTLED|PENDING'}",
+    min: 0,
+    renderer: "area",
+    yAxisFormatter: PromConsole.NumberFormatter.humanizeNoSmallPrefix,
+    yHoverFormatter: PromConsole.NumberFormatter.humanizeNoSmallPrefix,
+    yTitle: 'Tasks total'
+  })
+  </script>
+
+  <h3>Task State Changes</h3>
+  <div id="taskRateGraph"></div>
+  <script>
+  new PromConsole.Graph({
+    node: document.querySelector("#taskRateGraph"),
+    expr: "delta(aurora_task_store{state=~'LOST|KILLED|FINISHED|FAILED'}[2m]) / 2",
+    renderer: "line",
+    yAxisFormatter: PromConsole.NumberFormatter.humanizeNoSmallPrefix,
+    yHoverFormatter: PromConsole.NumberFormatter.humanizeNoSmallPrefix,
+    yTitle: 'delta per min'
+  })
+  </script>
+
+
+{{ template "prom_content_tail" . }}
+
+{{ template "tail" }}
