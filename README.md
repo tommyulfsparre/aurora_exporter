@@ -18,4 +18,9 @@ exporter.aurora-url            | [URL](#aurora-url) to an Aurora scheduler or Zo
 #### Aurora URL
 Can be either a single ``http://host:port`` or a comma-separated ``zk://host1:port,zk://host2:port`` URL.
 
+## Console Dashboard
+
+Copy the content of `consoles` to the consoles folder used by your Prometheus master. Your Aurora
+dashboard will then be available at `http://your-prometheus:9000/consoles/aurora.html`.
+
 ---
