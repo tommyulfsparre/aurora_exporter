@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -37,9 +38,16 @@ var httpClient = http.Client{
 
 type exporter struct {
 	sync.Mutex
-	f        finder
-	errors   prometheus.Counter
-	duration prometheus.Gauge
+	f            finder
+	errors       prometheus.Counter
+	duration     prometheus.Gauge
+	pendingTasks *prometheus.GaugeVec
+}
+
+type PendingTask struct {
+	PenaltyMs int      `json:"penaltyMs"`
+	TaskIds   []string `json:"taskIds"`
+	Name      string
 }
 
 func newAuroraExporter(f finder) *exporter {
@@ -57,6 +65,14 @@ func newAuroraExporter(f finder) *exporter {
 				Name:      "exporter_last_scrape_duration_seconds",
 				Help:      "The last scrape duration",
 			}),
+		pendingTasks: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "tasks_pending",
+				Help:      "Number of pending tasks, by job",
+			},
+			[]string{"role", "env", "job"},
+		),
 	}
 }
 
@@ -97,6 +113,29 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 	if err != nil {
 		recordErr(err)
 		return
+	}
+
+	pendingURL := fmt.Sprintf("%s/pendingtasks", url)
+	pendingResp, err := httpClient.Get(pendingURL)
+	if err != nil {
+		recordErr(err)
+		return
+	}
+	defer pendingResp.Body.Close()
+
+	pending := make([]PendingTask, 0)
+
+	if err = json.NewDecoder(pendingResp.Body).Decode(&pending); err != nil {
+		recordErr(err)
+		return
+	}
+
+	for _, task := range pending {
+		jobKey := strings.Split(task.Name, "/")
+		count := len(task.TaskIds)
+		metric := e.pendingTasks.WithLabelValues(jobKey[0], jobKey[1], jobKey[2])
+		metric.Set(float64(count))
+		ch <- metric
 	}
 
 	varsURL := fmt.Sprintf("%s/vars.json", url)
