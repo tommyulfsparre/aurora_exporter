@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -487,169 +486,180 @@ var gauges = map[string]*prometheus.Desc{
 	),
 }
 
-var (
-	slaLabels = []string{"role", "env", "job"}
-	slaRe     = map[*regexp.Regexp]string{
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms$"):                         "Median time to assigned.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms$"):                         "Median time to running.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms_nonprod$"):                 "Median time to assigned nonprod.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms_nonprod$"):                 "Median time to running nonprod.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent$"):         "Aggregate platform uptime.",
-		regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent_nonprod$"): "Aggregate platform uptime nonprod.",
-	}
-)
+type parser struct {
+	match  int
+	metric prometheus.Collector
+	regex  *regexp.Regexp
+}
 
-func slaMetric(name string, value float64) (metric prometheus.Metric) {
-	for r, desc := range slaRe {
-		match := r.FindStringSubmatch(name)
-		if len(match) == 4 {
-			role, env, job := match[1], match[2], match[3]
+func (p *parser) parse(name string, value float64, ch chan<- prometheus.Metric) {
+	match := p.regex.FindStringSubmatch(name)
+	if len(match) == p.match {
+		var metric prometheus.Metric
 
-			jobKey := fmt.Sprintf("_%s/%s/%s", role, env, job)
-			metricName := strings.Replace(name, jobKey, "", 1)
+		switch m := p.metric.(type) {
+		case *prometheus.CounterVec:
+			metric = m.WithLabelValues(match[1:]...)
+			metric.(prometheus.Counter).Set(value)
+		case *prometheus.GaugeVec:
+			metric = m.WithLabelValues(match[1:]...)
+			metric.(prometheus.Gauge).Set(value)
+		}
 
-			metric = prometheus.MustNewConstMetric(
-				prometheus.NewDesc(
-					prometheus.BuildFQName(namespace, "", metricName),
-					desc, slaLabels, nil,
-				),
-				prometheus.GaugeValue,
-				value, role, env, job,
-			)
-			break
+		if metric != nil {
+			ch <- metric
 		}
 	}
-	return metric
 }
 
-var (
-	stateLabel  = []string{"state"}
-	taskStoreRe = regexp.MustCompile("task_store_(?P<state>[A-Z]+)")
-)
-
-func taskStoreMetric(name string, value float64) (metric prometheus.Metric) {
-	match := taskStoreRe.FindStringSubmatch(name)
-	if len(match) == 2 {
-		state := match[1]
-
-		metric = prometheus.MustNewConstMetric(
-			prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, "", "task_store"),
-				"Task store state.",
-				stateLabel, nil,
-			),
-			prometheus.GaugeValue,
-			value, state,
-		)
-	}
-	return metric
+var prefixParser = map[string]*parser{
+	"tasks_": &parser{
+		match: 5,
+		metric: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Name:      "tasks",
+				Help:      "Task state per job.",
+			},
+			[]string{"state", "role", "env", "job"},
+		),
+		regex: regexp.MustCompile("tasks_(?P<state>.*)_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)"),
+	},
+	"tasks_lost_rack_": &parser{
+		match: 2,
+		metric: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Name:      "tasks_lost_rack",
+				Help:      "Task lost per rack total.",
+			},
+			[]string{"rack"},
+		),
+		regex: regexp.MustCompile("tasks_lost_rack_(?P<rack>.*)"),
+	},
+	"task_store_": &parser{
+		match: 2,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "task_store",
+				Help:      "Task store state.",
+			},
+			[]string{"state"},
+		),
+		regex: regexp.MustCompile("task_store_(?P<state>[A-Z]+)"),
+	},
+	"update_transition_": &parser{
+		match: 2,
+		metric: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Name:      "update_transition",
+				Help:      "Update transition.",
+			},
+			[]string{"state"},
+		),
+		regex: regexp.MustCompile("update_transition_(?P<state>.*)"),
+	},
+	"scheduler_lifecycle_": &parser{
+		match: 2,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "scheduler_lifecycle",
+				Help:      "Scheduler lifecycle.",
+			},
+			[]string{"state"},
+		),
+		regex: regexp.MustCompile("scheduler_lifecycle_(?P<state>[A-Z]+)"),
+	},
 }
 
-var (
-	tasksLabels = []string{"state", "role", "env", "job"}
-	tasksRe     = regexp.MustCompile("tasks_(?P<state>.*)_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)")
-)
-
-func tasksMetric(name string, value float64) (metric prometheus.Metric) {
-	match := tasksRe.FindStringSubmatch(name)
-	if len(match) == 5 {
-		state, role, env, job := match[1], match[2], match[3], match[4]
-
-		metric = prometheus.MustNewConstMetric(
-			prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, "", "tasks"),
-				"Task state per job.",
-				tasksLabels, nil,
-			),
-			prometheus.CounterValue,
-			value, state, role, env, job,
-		)
-	}
-	return metric
-}
-
-var (
-	rackLabels  = []string{"rack"}
-	tasksRackRe = regexp.MustCompile("tasks_lost_rack_(?P<rack>.*)")
-)
-
-func tasksRackMetric(name string, value float64) (metric prometheus.Metric) {
-	match := tasksRackRe.FindStringSubmatch(name)
-	if len(match) == 2 {
-		rack := match[1]
-
-		metric = prometheus.MustNewConstMetric(
-			prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, "", "tasks_lost_rack"),
-				"Task lost per rack total.",
-				rackLabels, nil,
-			),
-			prometheus.CounterValue,
-			value, rack,
-		)
-	}
-	return metric
-}
-
-var updateRe = regexp.MustCompile("update_transition_(?P<state>[A-Z]+)")
-
-func updateMetric(name string, value float64) (metric prometheus.Metric) {
-	match := updateRe.FindStringSubmatch(name)
-	if len(match) == 2 {
-		state := match[1]
-
-		metric = prometheus.MustNewConstMetric(
-			prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, "", "update_transition"),
-				"Update transition.",
-				stateLabel, nil,
-			),
-			prometheus.CounterValue,
-			value, state,
-		)
-	}
-	return metric
-}
-
-var schedulerLifecycleRe = regexp.MustCompile("scheduler_lifecycle_(?P<state>[A-Z]+)")
-
-func schedulerLifecycleMetric(name string, value float64) (metric prometheus.Metric) {
-	match := schedulerLifecycleRe.FindStringSubmatch(name)
-	if len(match) == 2 {
-		state := match[1]
-
-		metric = prometheus.MustNewConstMetric(
-			prometheus.NewDesc(
-				prometheus.BuildFQName(namespace, "", "scheduler_lifecycle"),
-				"Scheduler lifecycle.",
-				stateLabel, nil,
-			),
-			prometheus.GaugeValue,
-			value, state,
-		)
-	}
-	return metric
-}
-
-var prefixFunc = map[string]func(string, float64) prometheus.Metric{
-	"tasks_":               tasksMetric,
-	"tasks_lost_rack_":     tasksRackMetric,
-	"task_store_":          taskStoreMetric,
-	"sla_":                 slaMetric,
-	"update_transition_":   updateMetric,
-	"scheduler_lifecycle_": schedulerLifecycleMetric,
+var suffixParser = map[string]*parser{
+	"_mtta_ms": &parser{
+		match: 4,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "sla_mtta_ms",
+				Help:      "Median time to assigned.",
+			},
+			[]string{"role", "env", "job"},
+		),
+		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms$"),
+	},
+	"_mttr_ms": &parser{
+		match: 4,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "sla_mttr_ms",
+				Help:      "Median time to running.",
+			},
+			[]string{"role", "env", "job"},
+		),
+		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms$"),
+	},
+	"_mtta_ms_nonprod": &parser{
+		match: 4,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "sla_mtta_ms_nonprod",
+				Help:      "Median time to assigned nonprod.",
+			},
+			[]string{"role", "env", "job"},
+		),
+		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms_nonprod$"),
+	},
+	"_mttr_ms_nonprod": &parser{
+		match: 4,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "sla_mttr_ms_nonprod",
+				Help:      "Median time to running nonprod.",
+			},
+			[]string{"role", "env", "job"},
+		),
+		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms_nonprod$"),
+	},
+	"_platform_uptime_percent": &parser{
+		match: 4,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "sla_platform_uptime_percent",
+				Help:      "Aggregate platform uptime.",
+			},
+			[]string{"role", "env", "job"},
+		),
+		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent$"),
+	},
+	"_platform_uptime_percent_nonprod": &parser{
+		match: 4,
+		metric: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: namespace,
+				Name:      "sla_platform_uptime_percent_nonprod",
+				Help:      "Aggregate platform uptime nonprod.",
+			},
+			[]string{"role", "env", "job"},
+		),
+		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent_nonprod$"),
+	},
 }
 
 func labelVars(ch chan<- prometheus.Metric, name string, value float64) {
-	var metric prometheus.Metric
-
-	for prefix, f := range prefixFunc {
+	for prefix, parser := range prefixParser {
 		if strings.HasPrefix(name, prefix) {
-			metric = f(name, value)
+			parser.parse(name, value, ch)
 		}
 	}
 
-	if metric != nil {
-		ch <- metric
+	for suffix, parser := range suffixParser {
+		if strings.HasSuffix(name, suffix) {
+			parser.parse(name, value, ch)
+		}
 	}
 }
