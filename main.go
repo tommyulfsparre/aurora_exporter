@@ -18,9 +18,11 @@ import (
 const namespace = "aurora"
 
 var (
-	addr       = flag.String("web.listen-address", ":9113", "Address to listen on for web interface and telemetry.")
-	auroraURL  = flag.String("exporter.aurora-url", "http://127.0.0.1:8081", "URL to an Aurora scheduler or ZooKeeper ensemble")
-	metricPath = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
+	addr           = flag.String("web.listen-address", ":9113", "Address to listen on for web interface and telemetry.")
+	auroraURL      = flag.String("exporter.aurora-url", "http://127.0.0.1:8081", "URL to an Aurora scheduler or ZooKeeper ensemble")
+	metricPath     = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
+	bypassRedirect = flag.Bool("exporter.bypass-leader-redirect", false,
+		"When scraping a HTTP scheduler url, don't follow redirects to the leader instance.")
 )
 
 var noLables = []string{}
@@ -109,14 +111,28 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 		e.errors.Inc()
 	}
 
-	url, err := e.f.leaderURL()
+	var url string
+	var err error
+	if *bypassRedirect {
+		url = *auroraURL
+	} else {
+		url, err = e.f.leaderURL()
+		if err != nil {
+			recordErr(err)
+			return
+		}
+	}
+
+	pendingURL := fmt.Sprintf("%s/pendingtasks", url)
+	pendingReq, err := http.NewRequest("GET", pendingURL, nil)
 	if err != nil {
 		recordErr(err)
 		return
 	}
-
-	pendingURL := fmt.Sprintf("%s/pendingtasks", url)
-	pendingResp, err := httpClient.Get(pendingURL)
+	if *bypassRedirect {
+		pendingReq.Header.Add("Bypass-Leader-Redirect", "true")
+	}
+	pendingResp, err := httpClient.Do(pendingReq)
 	if err != nil {
 		recordErr(err)
 		return
@@ -139,7 +155,15 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 	}
 
 	varsURL := fmt.Sprintf("%s/vars.json", url)
-	resp, err := httpClient.Get(varsURL)
+	varsReq, err := http.NewRequest("GET", varsURL, nil)
+	if err != nil {
+		recordErr(err)
+		return
+	}
+	if *bypassRedirect {
+		varsReq.Header.Add("Bypass-Leader-Redirect", "true")
+	}
+	resp, err := httpClient.Do(varsReq)
 	if err != nil {
 		recordErr(err)
 		return
