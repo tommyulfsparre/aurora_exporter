@@ -9,11 +9,12 @@ This is an exporter for Prometheus to get instrumentation data for [Apache Auror
 
 ### Flags
 
-Name                           | Description
--------------------------------|------------
-web.listen-address             | Address to listen on for web interface and telemetry.
-web.telemetry-path             | Path under which to expose metrics.
-exporter.aurora-url            | [URL](#aurora-url) to an Aurora scheduler or ZooKeeper ensemble
+Name                            | Description
+--------------------------------|------------
+web.listen-address              | Address to listen on for web interface and telemetry.
+web.telemetry-path              | Path under which to expose metrics.
+exporter.aurora-url             | [URL](#aurora-url) to an Aurora scheduler or ZooKeeper ensemble.
+exporter.bypass-leader-redirect | Don't follow redirects to the leader instance.
 
 #### Aurora URL
 Can be either a single ``http://host:port`` or a comma-separated ``zk://host1:port,zk://host2:port`` URL.
