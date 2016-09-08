@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -46,7 +46,7 @@ type exporter struct {
 	pendingTasks *prometheus.GaugeVec
 }
 
-type PendingTask struct {
+type pendingTask struct {
 	PenaltyMs int      `json:"penaltyMs"`
 	TaskIds   []string `json:"taskIds"`
 	Name      string
@@ -98,52 +98,21 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- e.duration
 }
 
-func (e *exporter) scrape(ch chan<- prometheus.Metric) {
-	defer close(ch)
-
-	now := time.Now().UnixNano()
-	defer func() {
-		e.duration.Set(float64(time.Now().UnixNano()-now) / 1000000000)
-	}()
-
-	recordErr := func(err error) {
-		glog.Warning(err)
-		e.errors.Inc()
-	}
-
-	var url string
-	var err error
-	if *bypassRedirect {
-		url = *auroraURL
-	} else {
-		url, err = e.f.leaderURL()
-		if err != nil {
-			recordErr(err)
-			return
-		}
-	}
-
-	pendingURL := fmt.Sprintf("%s/pendingtasks", url)
-	pendingReq, err := http.NewRequest("GET", pendingURL, nil)
+func (e *exporter) parsePending(url string, bypass bool, ch chan<- prometheus.Metric) error {
+	req, err := newRequest("GET", url+"/pendingtasks", nil, bypass)
 	if err != nil {
-		recordErr(err)
-		return
+		return err
 	}
-	if *bypassRedirect {
-		pendingReq.Header.Add("Bypass-Leader-Redirect", "true")
-	}
-	pendingResp, err := httpClient.Do(pendingReq)
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
-		recordErr(err)
-		return
+		return err
 	}
-	defer pendingResp.Body.Close()
+	defer resp.Body.Close()
 
-	pending := make([]PendingTask, 0)
-
-	if err = json.NewDecoder(pendingResp.Body).Decode(&pending); err != nil {
-		recordErr(err)
-		return
+	pending := make([]pendingTask, 0)
+	if err = json.NewDecoder(resp.Body).Decode(&pending); err != nil {
+		return err
 	}
 
 	for _, task := range pending {
@@ -154,27 +123,24 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 		ch <- metric
 	}
 
-	varsURL := fmt.Sprintf("%s/vars.json", url)
-	varsReq, err := http.NewRequest("GET", varsURL, nil)
+	return nil
+}
+
+func (e *exporter) parseVars(url string, bypass bool, ch chan<- prometheus.Metric) error {
+	req, err := newRequest("GET", url+"/vars.json", nil, bypass)
 	if err != nil {
-		recordErr(err)
-		return
+		return err
 	}
-	if *bypassRedirect {
-		varsReq.Header.Add("Bypass-Leader-Redirect", "true")
-	}
-	resp, err := httpClient.Do(varsReq)
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
-		recordErr(err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 
 	var vars map[string]interface{}
-
 	if err = json.NewDecoder(resp.Body).Decode(&vars); err != nil {
-		recordErr(err)
-		return
+		return err
 	}
 
 	for name, v := range vars {
@@ -201,6 +167,54 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 
 		labelVars(ch, name, v)
 	}
+
+	return nil
+}
+
+func (e *exporter) scrape(ch chan<- prometheus.Metric) {
+	defer close(ch)
+
+	now := time.Now().UnixNano()
+	defer func() {
+		e.duration.Set(float64(time.Now().UnixNano()-now) / 1000000000)
+	}()
+
+	recordErr := func(err error) {
+		glog.Warning(err)
+		e.errors.Inc()
+	}
+
+	var url string
+	var err error
+	if *bypassRedirect {
+		url = *auroraURL
+	} else {
+		url, err = e.f.leaderURL()
+	}
+	if err != nil {
+		recordErr(err)
+		return
+	}
+
+	if err = e.parsePending(url, *bypassRedirect, ch); err != nil {
+		recordErr(err)
+	}
+
+	if err = e.parseVars(url, *bypassRedirect, ch); err != nil {
+		recordErr(err)
+	}
+}
+
+func newRequest(method, urlStr string, body io.Reader, bypass bool) (*http.Request, error) {
+	req, err := http.NewRequest(method, urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	if bypass {
+		req.Header.Add("Bypass-Leader-Redirect", "true")
+	}
+
+	return req, nil
 }
 
 func main() {
