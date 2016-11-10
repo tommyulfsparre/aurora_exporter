@@ -500,7 +500,7 @@ func (p *parser) parse(name string, value float64, ch chan<- prometheus.Metric) 
 		switch m := p.metric.(type) {
 		case *prometheus.CounterVec:
 			metric = m.WithLabelValues(match[1:]...)
-			metric.(prometheus.Counter).Set(value)
+			metric.(prometheus.Untyped).Set(value)
 		case *prometheus.GaugeVec:
 			metric = m.WithLabelValues(match[1:]...)
 			metric.(prometheus.Gauge).Set(value)
