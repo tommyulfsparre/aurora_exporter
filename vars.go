@@ -7,11 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newDesc(subsys, name, descr string) *prometheus.Desc {
-	fqn := prometheus.BuildFQName(namespace, subsys, name)
-	return prometheus.NewDesc(fqn, descr, nil, nil)
-}
-
 var counters = map[string]*prometheus.Desc{
 	"async_tasks_completed": newDesc(
 		"async_tasks", "completed",
@@ -487,88 +482,71 @@ var gauges = map[string]*prometheus.Desc{
 }
 
 type parser struct {
-	match  int
-	metric prometheus.Collector
-	regex  *regexp.Regexp
+	match int
+	vt    prometheus.ValueType
+	desc  *prometheus.Desc
+	regex *regexp.Regexp
 }
 
 func (p *parser) parse(name string, value float64, ch chan<- prometheus.Metric) {
 	match := p.regex.FindStringSubmatch(name)
 	if len(match) == p.match {
-		var metric prometheus.Metric
-
-		switch m := p.metric.(type) {
-		case *prometheus.CounterVec:
-			metric = m.WithLabelValues(match[1:]...)
-			metric.(prometheus.Counter).Set(value)
-		case *prometheus.GaugeVec:
-			metric = m.WithLabelValues(match[1:]...)
-			metric.(prometheus.Gauge).Set(value)
-		}
-
-		if metric != nil {
-			ch <- metric
-		}
+		ch <- prometheus.MustNewConstMetric(
+			p.desc,
+			p.vt,
+			value,
+			match[1:]...,
+		)
 	}
 }
 
 var prefixParser = map[string]*parser{
 	"tasks_": &parser{
 		match: 5,
-		metric: prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Namespace: namespace,
-				Name:      "tasks",
-				Help:      "Task state per job.",
-			},
+		vt:    prometheus.CounterValue,
+		desc: newDescWithLabels(
+			"", "tasks",
+			"Task state per job.",
 			[]string{"state", "role", "env", "job"},
 		),
 		regex: regexp.MustCompile("tasks_(?P<state>.*)_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)"),
 	},
 	"tasks_lost_rack_": &parser{
 		match: 2,
-		metric: prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Namespace: namespace,
-				Name:      "tasks_lost_rack",
-				Help:      "Task lost per rack total.",
-			},
+		vt:    prometheus.CounterValue,
+		desc: newDescWithLabels(
+			"", "tasks_lost_rack",
+			"Task lost per rack total.",
 			[]string{"rack"},
 		),
 		regex: regexp.MustCompile("tasks_lost_rack_(?P<rack>.*)"),
 	},
 	"task_store_": &parser{
 		match: 2,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "task_store",
-				Help:      "Task store state.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "task_store",
+			"Task store state.",
 			[]string{"state"},
 		),
 		regex: regexp.MustCompile("task_store_(?P<state>[A-Z]+)"),
 	},
 	"update_transition_": &parser{
 		match: 2,
-		metric: prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Namespace: namespace,
-				Name:      "update_transition",
-				Help:      "Update transition.",
-			},
+		vt:    prometheus.CounterValue,
+		desc: newDescWithLabels(
+			"", "update_transition",
+			"Update transition.",
 			[]string{"state"},
 		),
 		regex: regexp.MustCompile("update_transition_(?P<state>.*)"),
 	},
 	"scheduler_lifecycle_": &parser{
 		match: 2,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "scheduler_lifecycle",
-				Help:      "Scheduler lifecycle.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "scheduler_lifecycle",
+			"Scheduler lifecycle.",
 			[]string{"state"},
 		),
 		regex: regexp.MustCompile("scheduler_lifecycle_(?P<state>[A-Z]+)"),
@@ -578,72 +556,60 @@ var prefixParser = map[string]*parser{
 var suffixParser = map[string]*parser{
 	"_mtta_ms": &parser{
 		match: 4,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "sla_mtta_ms",
-				Help:      "Median time to assigned.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "sla_mtta_ms",
+			"Median time to assigned.",
 			[]string{"role", "env", "job"},
 		),
 		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms$"),
 	},
 	"_mttr_ms": &parser{
 		match: 4,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "sla_mttr_ms",
-				Help:      "Median time to running.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "sla_mttr_ms",
+			"Median time to running.",
 			[]string{"role", "env", "job"},
 		),
 		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms$"),
 	},
 	"_mtta_ms_nonprod": &parser{
 		match: 4,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "sla_mtta_ms_nonprod",
-				Help:      "Median time to assigned nonprod.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "sla_mtta_ms_nonprod",
+			"Median time to assigned nonprod.",
 			[]string{"role", "env", "job"},
 		),
 		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mtta_ms_nonprod$"),
 	},
 	"_mttr_ms_nonprod": &parser{
 		match: 4,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "sla_mttr_ms_nonprod",
-				Help:      "Median time to running nonprod.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "sla_mttr_ms_nonprod",
+			"Median time to running nonprod.",
 			[]string{"role", "env", "job"},
 		),
 		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_mttr_ms_nonprod$"),
 	},
 	"_platform_uptime_percent": &parser{
 		match: 4,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "sla_platform_uptime_percent",
-				Help:      "Aggregate platform uptime.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "sla_platform_uptime_percent",
+			"Aggregate platform uptime.",
 			[]string{"role", "env", "job"},
 		),
 		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent$"),
 	},
 	"_platform_uptime_percent_nonprod": &parser{
 		match: 4,
-		metric: prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: namespace,
-				Name:      "sla_platform_uptime_percent_nonprod",
-				Help:      "Aggregate platform uptime nonprod.",
-			},
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "sla_platform_uptime_percent_nonprod",
+			"Aggregate platform uptime nonprod.",
 			[]string{"role", "env", "job"},
 		),
 		regex: regexp.MustCompile("sla_(?P<role>.*)/(?P<env>.*)/(?P<job>.*)_platform_uptime_percent_nonprod$"),
@@ -662,4 +628,14 @@ func labelVars(ch chan<- prometheus.Metric, name string, value float64) {
 			parser.parse(name, value, ch)
 		}
 	}
+}
+
+func newDesc(subsys, name, descr string) *prometheus.Desc {
+	fqn := prometheus.BuildFQName(namespace, subsys, name)
+	return prometheus.NewDesc(fqn, descr, nil, nil)
+}
+
+func newDescWithLabels(subsys, name, descr string, labels []string) *prometheus.Desc {
+	fqn := prometheus.BuildFQName(namespace, subsys, name)
+	return prometheus.NewDesc(fqn, descr, labels, nil)
 }
