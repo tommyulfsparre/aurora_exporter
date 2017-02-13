@@ -24,7 +24,7 @@ type finder interface {
 }
 
 func newFinder(url string) (f finder, err error) {
-	if strings.HasPrefix(url, "http://") {
+	if strings.HasPrefix(url, "http") {
 		f = &httpFinder{url: url}
 	}
 
