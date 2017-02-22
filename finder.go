@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	zkPath         = "/aurora/scheduler"
 	zkLeaderPrefix = "singleton_candidate_"
 )
 
@@ -23,13 +22,13 @@ type finder interface {
 	leaderURL() (string, error)
 }
 
-func newFinder(url string) (f finder, err error) {
+func newFinder(url string, znode string) (f finder, err error) {
 	if strings.HasPrefix(url, "http") {
 		f = &httpFinder{url: url}
 	}
 
 	if strings.HasPrefix(url, "zk://") {
-		f = newZkFinder(url)
+		f = newZkFinder(url, znode)
 	}
 
 	if f == nil {
@@ -86,7 +85,7 @@ type zkFinder struct {
 	leaderIP string
 }
 
-func newZkFinder(url string) *zkFinder {
+func newZkFinder(url string, znode string) *zkFinder {
 	zkSrvs, err := hostsFromURL(url)
 	if err != nil {
 		panic(err)
@@ -104,12 +103,12 @@ func newZkFinder(url string) *zkFinder {
 	}()
 
 	f := zkFinder{conn: conn}
-	go f.watch()
+	go f.watch(znode)
 
 	return &f
 }
 
-func (f *zkFinder) leaderzNode() (string, error) {
+func (f *zkFinder) leaderzNode(zkPath string) (string, error) {
 	children, stat, err := f.conn.Children(zkPath)
 	if stat == nil {
 		err = errors.New("zkFinder: children returned nil stat")
@@ -157,9 +156,9 @@ func (f *zkFinder) leaderURL() (string, error) {
 	return fmt.Sprintf("http://%s:8081", f.leaderIP), nil
 }
 
-func (f *zkFinder) watch() {
+func (f *zkFinder) watch(znode string) {
 	for _ = range time.NewTicker(1 * time.Second).C {
-		zNode, err := f.leaderzNode()
+		zNode, err := f.leaderzNode(znode)
 		if err != nil {
 			glog.Warning(err)
 			continue

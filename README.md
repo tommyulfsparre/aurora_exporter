@@ -14,6 +14,7 @@ Name                            | Description
 web.listen-address              | Address to listen on for web interface and telemetry.
 web.telemetry-path              | Path under which to expose metrics.
 exporter.aurora-url             | [URL](#aurora-url) to an Aurora scheduler or ZooKeeper ensemble.
+zk.path                         | The path for the aurora scheduler znode, this defaults to `/aurora/scheduler`
 exporter.bypass-leader-redirect | Don't follow redirects to the leader instance.
 
 #### Aurora URL
