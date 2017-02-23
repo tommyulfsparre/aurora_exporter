@@ -12,6 +12,14 @@ var counters = map[string]*prometheus.Desc{
 		"async_tasks", "completed",
 		"Number of completed async tasks.",
 	),
+	"assigner_evaluated_offers": newDesc(
+		"assigner_evaluated", "offers",
+		"Number of offers evaluated before a task was assigned.",
+	),
+	"assigner_launch_failures": newDesc(
+		"assigner_launch", "failures",
+		"Number of task launch failures.",
+	),
 	"cron_job_launch_failures": newDesc(
 		"cron", "job_launch_failures",
 		"Scheduled job failures total.",
@@ -531,6 +539,16 @@ var prefixParser = map[string]*parser{
 		),
 		regex: regexp.MustCompile("task_store_(?P<state>[A-Z]+)"),
 	},
+	"thrift_workload_": &parser{
+		match: 2,
+		vt:    prometheus.CounterValue,
+		desc: newDescWithLabels(
+			"", "thrift_workload",
+			"Number of thrift calls per method.",
+			[]string{"method"},
+		),
+		regex: regexp.MustCompile("thrift_workload_(?P<method>.*)"),
+	},
 	"update_transition_": &parser{
 		match: 2,
 		vt:    prometheus.CounterValue,
@@ -551,9 +569,29 @@ var prefixParser = map[string]*parser{
 		),
 		regex: regexp.MustCompile("scheduler_lifecycle_(?P<state>[A-Z]+)"),
 	},
+	"zk_connection_state_": &parser{
+		match: 2,
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "zk_connection_state",
+			"Current ZooKeeper connection state.",
+			[]string{"state"},
+		),
+		regex: regexp.MustCompile("zk_connection_state_(?P<state>[A-Z]+)$"),
+	},
 }
 
 var suffixParser = map[string]*parser{
+	"_counter": &parser{
+		match: 2,
+		vt:    prometheus.GaugeValue,
+		desc: newDescWithLabels(
+			"", "zk_connection_state_total",
+			"Number of ZooKeeper connection state changes.",
+			[]string{"state"},
+		),
+		regex: regexp.MustCompile("zk_connection_state_(?P<state>[A-Z]+)_counter$"),
+	},
 	"_mtta_ms": &parser{
 		match: 4,
 		vt:    prometheus.GaugeValue,
