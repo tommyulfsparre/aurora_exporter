@@ -21,7 +21,7 @@ var (
 	addr           = flag.String("web.listen-address", ":9113", "Address to listen on for web interface and telemetry.")
 	auroraURL      = flag.String("exporter.aurora-url", "http://127.0.0.1:8081", "URL to an Aurora scheduler or ZooKeeper ensemble")
 	metricPath     = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
-	zkPath     = flag.String("zk.path", "/aurora/scheduler", "zkNode that aurora matains master election.")
+	zkPath     = flag.String("zk.path", "/aurora/scheduler", "zkNode that aurora maintains master election.")
 	bypassRedirect = flag.Bool("exporter.bypass-leader-redirect", false,
 		"When scraping a HTTP scheduler url, don't follow redirects to the leader instance.")
 )

@@ -14,15 +14,14 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
-const (
-	zkLeaderPrefix = "singleton_candidate_"
-)
+const zkLeaderPrefix = "singleton_candidate_"
+
 
 type finder interface {
 	leaderURL() (string, error)
 }
 
-func newFinder(url string, znode string) (f finder, err error) {
+func newFinder(url, znode string) (f finder, err error) {
 	if strings.HasPrefix(url, "http") {
 		f = &httpFinder{url: url}
 	}
@@ -85,7 +84,7 @@ type zkFinder struct {
 	leaderIP string
 }
 
-func newZkFinder(url string, znode string) *zkFinder {
+func newZkFinder(url, znode string) *zkFinder {
 	zkSrvs, err := hostsFromURL(url)
 	if err != nil {
 		panic(err)
