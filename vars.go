@@ -489,6 +489,22 @@ var gauges = map[string]*prometheus.Desc{
 	),
 }
 
+// Quota values containing _mb in their name are converted to bytes
+var quotas = map[string]*prometheus.Desc{
+	"cpu_cores": newDescWithLabels(
+		"quota", "cpus", "Maximum number of cpu cores.",
+		[]string{"role", },
+	),
+	"ram_mb": newDescWithLabels(
+		"quota", "ram_bytes", "Maximum amount of RAM available in bytes.",
+		[]string{"role", },
+	),
+	"disk_mb": newDescWithLabels(
+		"quota", "disk_bytes", "Maximum amount of disk space available in bytes.",
+		[]string{"role", },
+	),
+}
+
 type parser struct {
 	match int
 	vt    prometheus.ValueType
