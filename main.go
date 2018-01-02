@@ -99,8 +99,8 @@ func (e *exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- e.duration
 }
 
-func (e *exporter) parseQuotas(url string, bypass bool, ch chan<- prometheus.Metric) error {
-	req, err := newRequest("GET", url+"/quotas", nil, bypass)
+func (e *exporter) parseQuotas(url string, ch chan<- prometheus.Metric) error {
+	req, err := newRequest("GET", url+"/quotas", nil, false)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (e *exporter) scrape(ch chan<- prometheus.Metric) {
 		recordErr(err)
 	}
 
-	if err = e.parseQuotas(url, *bypassRedirect, ch); err != nil {
+	if err = e.parseQuotas(url, ch); err != nil {
 		recordErr(err)
 	}
 }
