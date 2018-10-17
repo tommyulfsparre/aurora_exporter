@@ -4,7 +4,7 @@ This is an exporter for Prometheus to get instrumentation data for [Apache Auror
 
 ## Build and run
 
-    make
+    go build .
     ./aurora_exporter <flags>
 
 ### Flags
