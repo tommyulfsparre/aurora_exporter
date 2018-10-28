@@ -29,7 +29,8 @@ var counters = map[string]*prometheus.Desc{
 		"Cron scheduler loaded.",
 	),
 	"dropped_update_events": newDesc(
-		"", "dropped_update_events", "",
+		"", "dropped_update_events",
+		"Number of dropped update events.",
 	),
 	"framework_registered": newDesc(
 		"", "framework_registered",
@@ -40,10 +41,12 @@ var counters = map[string]*prometheus.Desc{
 		"Lost garbage collection task total.",
 	),
 	"http_200_responses_events": newDesc(
-		"http_200", "responses_events", "",
+		"http_200", "responses_events",
+		"Number of HTTP 200 status response events.",
 	),
 	"http_200_responses_nanos_total": newDesc(
-		"http_200", "responses_nanos_total", "",
+		"http_200", "responses_nanos_total",
+		"Timed HTTP 200 status response total.",
 	),
 	"http_500_responses_events": newDesc(
 		"http_500", "responses_events",
@@ -62,13 +65,16 @@ var counters = map[string]*prometheus.Desc{
 		"State change errors total.",
 	),
 	"jvm_class_loaded_count": newDesc(
-		"jvm", "class_loaded_count", "",
+		"jvm", "class_loaded_count",
+		"Number of classes loaded.",
 	),
 	"jvm_class_total_loaded_count": newDesc(
-		"jvm", "class_total_loaded_count", "",
+		"jvm", "class_total_loaded_count",
+		"Total number of classes loaded.",
 	),
 	"jvm_class_unloaded_count": newDesc(
-		"jvm", "class_unloaded_count", "",
+		"jvm", "class_unloaded_count",
+		"Number of classes unloaded.",
 	),
 	"jvm_gc_PS_MarkSweep_collection_count": newDesc(
 		"jvm", "gc_ps_marksweep_collection_count",
@@ -121,40 +127,52 @@ var counters = map[string]*prometheus.Desc{
 		"Accepted offer no longer exists in offer queue.",
 	),
 	"preemptor_missing_attributes": newDesc(
-		"preemptor", "missing_attributes", "",
+		"preemptor", "missing_attributes",
+		"Preemptor missing attributes.",
 	),
 	"preemptor_slot_search_attempts_for_non_prod": newDesc(
-		"preemptor", "slot_search_attempts_for_non_prod", "",
+		"preemptor", "slot_search_attempts_for_non_prod",
+		"Preemptor slot search attempts for non prod.",
 	),
 	"preemptor_slot_search_attempts_for_prod": newDesc(
-		"preemptor", "slot_search_attempts_for_prod", "",
+		"preemptor", "slot_search_attempts_for_prod",
+		"Preemptor slot search attempts for prod.",
 	),
 	"preemptor_slot_search_failed_for_non_prod": newDesc(
-		"preemptor", "slot_search_failed_for_non_prod", "",
+		"preemptor", "slot_search_failed_for_non_prod",
+		"Preemptor slot search failed for non prod.",
 	),
 	"preemptor_slot_search_failed_for_prod": newDesc(
-		"preemptor", "slot_search_failed_for_prod", "",
+		"preemptor", "slot_search_failed_for_prod",
+		"Preemptor slot search failed for prod.",
 	),
 	"preemptor_slot_search_successful_for_non_prod": newDesc(
-		"preemptor", "slot_search_successful_for_non_prod", "",
+		"preemptor", "slot_search_successful_for_non_prod",
+		"Preemptor slot search successful for non prod.",
 	),
 	"preemptor_slot_search_successful_for_prod": newDesc(
-		"preemptor", "slot_search_successful_for_prod", "",
+		"preemptor", "slot_search_successful_for_prod",
+		"Preemptor slot search successful for prod.",
 	),
 	"preemptor_slot_validation_failed": newDesc(
-		"preemptor", "slot_validation_failed", "",
+		"preemptor", "slot_validation_failed",
+		"Preemptor slot validation failed.",
 	),
 	"preemptor_slot_validation_successful": newDesc(
-		"preemptor", "slot_validation_successful", "",
+		"preemptor", "slot_validation_successful",
+		"Preemptor slot validation successful.",
 	),
 	"preemptor_task_processor_runs": newDesc(
-		"preemptor", "task_processor_runs", "",
+		"preemptor", "task_processor_runs",
+		"Preemptor task processor runs.",
 	),
 	"preemptor_tasks_preempted_non_prod": newDesc(
-		"preemptor", "tasks_preempted_non_prod", "",
+		"preemptor", "tasks_preempted_non_prod",
+		"Preemptor tasks preempted non prod.",
 	),
 	"preemptor_tasks_preempted_prod": newDesc(
-		"preemptor", "tasks_preempted_prod", "",
+		"preemptor", "tasks_preempted_prod",
+		"Preemptor tasks preempted prod.",
 	),
 	"process_max_fd_count": newDesc(
 		"process", "max_fd_count",
@@ -177,10 +195,12 @@ var counters = map[string]*prometheus.Desc{
 		"Number of task which could not be scheduled.",
 	),
 	"scheduled_task_penalty_events": newDesc(
-		"scheduled_task", "penalty_events", "",
+		"scheduled_task", "penalty_events",
+		"Number of tasks with penalty events.",
 	),
 	"scheduled_task_penalty_ms_total": newDesc(
-		"scheduled_task", "penalty_ms_total", "",
+		"scheduled_task", "penalty_ms_total",
+		"Timed penalty events total.",
 	),
 	"scheduler_backup_failed": newDesc(
 		"scheduler", "backup_failed",
@@ -191,7 +211,8 @@ var counters = map[string]*prometheus.Desc{
 		"Number successful storage backup.",
 	),
 	"scheduler_driver_kill_failures": newDesc(
-		"scheduler", "driver_kill_failures", "",
+		"scheduler", "driver_kill_failures",
+		"Number of driver kill failures.",
 	),
 	"scheduler_gc_insufficient_offers": newDesc(
 		"scheduler_gc", "insufficient_offers",
@@ -206,110 +227,140 @@ var counters = map[string]*prometheus.Desc{
 		"Number of garbage collection tasks created.",
 	),
 	"scheduler_log_bad_frames_read": newDesc(
-		"scheduler_log", "bad_frames_read", "",
+		"scheduler_log", "bad_frames_read",
+		"Number of bad frames read.",
 	),
 	"scheduler_log_bytes_read": newDesc(
-		"scheduler_log", "bytes_read", "",
+		"scheduler_log", "bytes_read",
+		"Number of resource bytes read.",
 	),
 	"scheduler_log_deflated_entries_read": newDesc(
-		"scheduler_log", "deflated_entries_read", "",
+		"scheduler_log", "deflated_entries_read",
+		"Number of deflated entries.",
 	),
 	"scheduler_log_entries_read": newDesc(
-		"scheduler_log", "entries_read", "",
+		"scheduler_log", "entries_read",
+		"Number of entries read.",
 	),
 	"scheduler_log_entries_written": newDesc(
-		"scheduler_log", "entries_written", "",
+		"scheduler_log", "entries_written",
+		"Number of entries written.",
 	),
 	"scheduler_log_native_append_events": newDesc(
 		"scheduler_log", "native_append_events",
 		"Number of append operations total.",
 	),
 	"scheduler_log_native_append_failures": newDesc(
-		"scheduler_log", "native_append_failures", "Number of append failures total.",
+		"scheduler_log", "native_append_failures",
+		"Number of append failures total.",
 	),
 	"scheduler_log_native_append_nanos_total": newDesc(
 		"scheduler_log", "native_append_nanos_total",
 		"Timed append operations total.",
 	),
 	"scheduler_log_native_append_nanos_total_per_sec": newDesc(
-		"scheduler_log", "native_append_nanos_total_per_sec", "",
+		"scheduler_log", "native_append_nanos_total_per_sec",
+		"Timed append operations total per second.",
 	),
 	"scheduler_log_native_append_timeouts": newDesc(
-		"scheduler_log", "native_append_timeouts", "",
+		"scheduler_log", "native_append_timeouts",
+		"Number of append timeouts.",
 	),
 	"scheduler_log_native_native_entries_skipped": newDesc(
-		"scheduler_log", "native_native_entries_skipped", "",
+		"scheduler_log", "native_native_entries_skipped",
+		"Number of native entries skipped.",
 	),
 	"scheduler_log_native_read_events": newDesc(
-		"scheduler_log", "native_read_events", "",
+		"scheduler_log", "native_read_events",
+		"Number of native read events.",
 	),
 	"scheduler_log_native_read_failures": newDesc(
-		"scheduler_log", "native_read_failures", "",
+		"scheduler_log", "native_read_failures",
+		"Number of read failures.",
 	),
 	"scheduler_log_native_read_nanos_total": newDesc(
-		"scheduler_log", "native_read_nanos_total", "",
+		"scheduler_log", "native_read_nanos_total",
+		"Timed native read total.",
 	),
 	"scheduler_log_native_read_timeouts": newDesc(
-		"scheduler_log", "native_read_timeouts", "",
+		"scheduler_log", "native_read_timeouts",
+		"Number of read timeouts.",
 	),
 	"scheduler_log_native_truncate_events": newDesc(
-		"scheduler_log", "native_truncate_events", "",
+		"scheduler_log", "native_truncate_events",
+		"Number of truncate events.",
 	),
 	"scheduler_log_native_truncate_failures": newDesc(
-		"scheduler_log", "native_truncate_failures", "",
+		"scheduler_log", "native_truncate_failures",
+		"Number of truncate failures.",
 	),
 	"scheduler_log_native_truncate_nanos_total": newDesc(
-		"scheduler_log", "native_truncate_nanos_total", "",
+		"scheduler_log", "native_truncate_nanos_total",
+		"Timed truncate total.",
 	),
 	"scheduler_log_native_truncate_timeouts": newDesc(
-		"scheduler_log", "native_truncate_timeouts", "",
+		"scheduler_log", "native_truncate_timeouts",
+		"Number of truncate timeouts.",
 	),
 	"scheduler_log_snapshots": newDesc(
-		"scheduler_log", "snapshots", "",
+		"scheduler_log", "snapshots",
+		"Number of snapshots.",
 	),
 	"scheduler_log_un_snapshotted_transactions": newDesc(
-		"scheduler_log", "un_snapshotted_transactions", "",
+		"scheduler_log", "un_snapshotted_transactions",
+		"Number of unsnapshotted transactions.",
 	),
 	"scheduler_resource_offers": newDesc(
 		"scheduler", "resource_offers",
 		"Number of resource offers that the scheduler has received.",
 	),
 	"scheduler_thrift_getJobSummary_events": newDesc(
-		"scheduler_thrift", "getJobSummary_events", "",
+		"scheduler_thrift", "getJobSummary_events",
+		"Number of getJobSummary events.",
 	),
 	"scheduler_thrift_getJobSummary_nanos_total": newDesc(
-		"scheduler_thrift", "getJobSummary_nanos_total", "",
+		"scheduler_thrift", "getJobSummary_nanos_total",
+		"Timed getJobSummary events.",
 	),
 	"scheduler_thrift_getQuota_events": newDesc(
-		"scheduler_thrift", "getQuota_events", "",
+		"scheduler_thrift", "getQuota_events",
+		"Number of getQuota events.",
 	),
 	"scheduler_thrift_getQuota_nanos_per_event": newDesc(
-		"scheduler_thrift", "getQuota_nanos_per_event", "",
+		"scheduler_thrift", "getQuota_nanos_per_event",
+		"Timed getQuota per event.",
 	),
 	"scheduler_thrift_getQuota_nanos_total": newDesc(
-		"scheduler_thrift", "getQuota_nanos_total", "",
+		"scheduler_thrift", "getQuota_nanos_total",
+		"Timed getQuota total.",
 	),
 	"task_kill_retries": newDesc(
 		"task", "kill_retries",
 		"Number of times the scheduler has retried to kill a Task.",
 	),
 	"task_queries_all": newDesc(
-		"task", "queries_all", "",
+		"task", "queries_all",
+		"Number of queries.",
 	),
 	"task_queries_by_host": newDesc(
-		"task", "queries_by_host", "",
+		"task", "queries_by_host",
+		"Number of queries by host.",
 	),
 	"task_queries_by_id": newDesc(
-		"task", "queries_by_id", "",
+		"task", "queries_by_id",
+		"Number of queries by id.",
 	),
 	"task_queries_by_job": newDesc(
-		"task", "queries_by_job", "",
+		"task", "queries_by_job",
+		"Number of queries by job.",
 	),
 	"task_throttle_events": newDesc(
-		"task", "throttle_events", "",
+		"task", "throttle_events",
+		"Number of throttle events.",
 	),
 	"task_throttle_ms_total": newDesc(
-		"task", "throttle_ms_total", "",
+		"task", "throttle_ms_total",
+		"Timed throttle total.",
 	),
 	"timed_out_tasks": newDesc(
 		"", "timed_out_tasks",
@@ -323,13 +374,16 @@ var counters = map[string]*prometheus.Desc{
 
 var gauges = map[string]*prometheus.Desc{
 	"http_200_responses_events_per_sec": newDesc(
-		"http_200", "responses_events_per_sec", "",
+		"http_200", "responses_events_per_sec",
+		"Number of HTTP 200 status response events per second.",
 	),
 	"http_200_responses_nanos_per_event": newDesc(
-		"http_200", "responses_nanos_per_event", "",
+		"http_200", "responses_nanos_per_event",
+		"Timed HTTP 200 status responses per event.",
 	),
 	"http_200_responses_nanos_total_per_sec": newDesc(
-		"http_200", "responses_nanos_total_per_sec", "",
+		"http_200", "responses_nanos_total_per_sec",
+		"Number of HTTP 200 status response events total per second.",
 	),
 	"jvm_gc_PS_MarkSweep_collection_time_ms": newDesc(
 		"jvm", "gc_ps_marksweep_collection_time_ms",
@@ -372,13 +426,16 @@ var gauges = map[string]*prometheus.Desc{
 		"Current number of live daemon threads.",
 	),
 	"log_storage_write_lock_wait_events_per_sec": newDesc(
-		"log_storage", "write_lock_wait_events_per_sec", "",
+		"log_storage", "write_lock_wait_events_per_sec",
+		"Number of lock wait events per second.",
 	),
 	"log_storage_write_lock_wait_ns_per_event": newDesc(
-		"log_storage", "write_lock_wait_ns_per_event", "",
+		"log_storage", "write_lock_wait_ns_per_event",
+		"Number of write lock wait nanoseconds per event.",
 	),
 	"log_storage_write_lock_wait_ns_total_per_sec": newDesc(
-		"log_storage", "write_lock_wait_ns_total_per_sec", "",
+		"log_storage", "write_lock_wait_ns_total_per_sec",
+		"Number of lock wait nanoseconds total per second.",
 	),
 	"outstanding_offers": newDesc(
 		"", "outstanding_offers",
@@ -389,62 +446,80 @@ var gauges = map[string]*prometheus.Desc{
 		"CPU time used by the process.",
 	),
 	"pubsub_executor_queue_size": newDesc(
-		"", "pubsub_executor_queue_size", "",
+		"", "pubsub_executor_queue_size",
+		"Current pubsub executor queue size.",
 	),
 	"schedule_queue_size": newDesc(
 		"schedule", "queue_size",
 		"Task scheduler queue size.",
 	),
 	"scheduled_task_penalty_events_per_sec": newDesc(
-		"scheduled_task", "penalty_events_per_sec", "",
+		"scheduled_task", "penalty_events_per_sec",
+		"Number of penalty events per second.",
 	),
 	"scheduled_task_penalty_ms_per_event": newDesc(
-		"scheduled_task", "penalty_ms_per_event", "",
+		"scheduled_task", "penalty_ms_per_event",
+		"Number of scheduled task penalty in millisecond per event.",
 	),
 	"scheduled_task_penalty_ms_total_per_sec": newDesc(
-		"scheduled_task", "penalty_ms_total_per_sec", "",
+		"scheduled_task", "penalty_ms_total_per_sec",
+		"Number of scheduled task penalty in millisecond total per event.",
 	),
 	"scheduler_log_bytes_written": newDesc(
-		"scheduler_log", "bytes_written", "",
+		"scheduler_log", "bytes_written",
+		"Total bytes written.",
 	),
 	"scheduler_log_native_append_events_per_sec": newDesc(
-		"scheduler_log", "native_append_events_per_sec", "",
+		"scheduler_log", "native_append_events_per_sec",
+		"Number of append events per second.",
 	),
 	"scheduler_log_native_append_nanos_per_event": newDesc(
-		"scheduler_log", "native_append_nanos_per_event", "",
+		"scheduler_log", "native_append_nanos_per_event",
+		"Number of appends per event.",
 	),
 	"scheduler_log_native_read_events_per_sec": newDesc(
-		"scheduler_log", "native_read_events_per_sec", "",
+		"scheduler_log", "native_read_events_per_sec",
+		"Number of read events per second.",
 	),
 	"scheduler_log_native_read_nanos_per_event": newDesc(
-		"scheduler_log", "native_read_nanos_per_event", "",
+		"scheduler_log", "native_read_nanos_per_event",
+		"Number of reads per event.",
 	),
 	"scheduler_log_native_read_nanos_total_per_sec": newDesc(
-		"scheduler_log", "native_read_nanos_total_per_sec", "",
+		"scheduler_log", "native_read_nanos_total_per_sec",
+		"Timed reads per second.",
 	),
 	"scheduler_log_native_truncate_events_per_sec": newDesc(
-		"scheduler_log", "native_truncate_events_per_sec", "",
+		"scheduler_log", "native_truncate_events_per_sec",
+		"NUmber of truncate events per second.",
 	),
 	"scheduler_log_native_truncate_nanos_per_event": newDesc(
-		"scheduler_log", "native_truncate_nanos_per_event", "",
+		"scheduler_log", "native_truncate_nanos_per_event",
+		"Number of truncate per event.",
 	),
 	"scheduler_log_native_truncate_nanos_total_per_sec": newDesc(
-		"scheduler_log", "native_truncate_nanos_total_per_sec", "",
+		"scheduler_log", "native_truncate_nanos_total_per_sec",
+		"Timed total truncate per second.",
 	),
 	"scheduler_thrift_getJobSummary_events_per_sec": newDesc(
-		"scheduler_thrift", "getJobSummary_events_per_sec", "",
+		"scheduler_thrift", "getJobSummary_events_per_sec",
+		"Timed getJobSummary per second.",
 	),
 	"scheduler_thrift_getJobSummary_nanos_per_event": newDesc(
-		"scheduler_thrift", "getJobSummary_nanos_per_event", "",
+		"scheduler_thrift", "getJobSummary_nanos_per_event",
+		"Timed getJobSummary per event.",
 	),
 	"scheduler_thrift_getJobSummary_nanos_total_per_sec": newDesc(
-		"scheduler_thrift", "getJobSummary_nanos_total_per_sec", "",
+		"scheduler_thrift", "getJobSummary_nanos_total_per_sec",
+		"Timed getJobSummary total per second.",
 	),
 	"scheduler_thrift_getQuota_events_per_sec": newDesc(
-		"scheduler_thrift", "getQuota_events_per_sec", "",
+		"scheduler_thrift", "getQuota_events_per_sec",
+		"Timed getQuota events per second.",
 	),
 	"scheduler_thrift_getQuota_nanos_total_per_sec": newDesc(
-		"scheduler_thrift", "getQuota_nanos_total_per_sec", "",
+		"scheduler_thrift", "getQuota_nanos_total_per_sec",
+		"Timed getQuota per second.",
 	),
 	"sla_cluster_mtta_ms": newDesc(
 		"sla", "cluster_mtta_ms",
@@ -479,13 +554,16 @@ var gauges = map[string]*prometheus.Desc{
 		"1 minute load average.",
 	),
 	"task_throttle_events_per_sec": newDesc(
-		"task", "throttle_events_per_sec", "",
+		"task", "throttle_events_per_sec",
+		"Timed throttle events per second.",
 	),
 	"task_throttle_ms_total_per_sec": newDesc(
-		"task", "throttle_ms_total_per_sec", "",
+		"task", "throttle_ms_total_per_sec",
+		"Timed throttle per second.",
 	),
 	"timeout_queue_size": newDesc(
-		"", "timeout_queue_size", "",
+		"", "timeout_queue_size",
+		"Total timeout queue size.",
 	),
 }
 
